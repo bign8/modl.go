@@ -1,2 +1,4 @@
 .ipynb_checkpoints
 antlr*.jar
+*.tokens
+*.interp
