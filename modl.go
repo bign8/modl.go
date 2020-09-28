@@ -2,10 +2,7 @@
 package modl
 
 import (
-	"fmt"
-
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-
 	"github.com/bign8/modl.go/internal/fs"
 	"github.com/bign8/modl.go/internal/parser"
 )
@@ -15,17 +12,24 @@ import (
 //go:generate java -jar ./antlr-4.8-complete.jar -Dlanguage=Go -Xexact-output-dir -o internal/parser grammar/antlr4/MODLLexer.g4
 //go:generate java -jar ./antlr-4.8-complete.jar -Dlanguage=Go -Xexact-output-dir -o internal/parser grammar/antlr4/MODLParser.g4
 
-// Unmarshal parses the MODL-encoded data and stores the result
-// in the value pointed to by v.
+// Unmarshal parses the MODL-encoded data and stores the result in the value pointed to by v.
 func Unmarshal(data []byte, v interface{}, files fs.FS) error {
 	is := antlr.NewInputStream(string(data))
 	lexer := parser.NewMODLLexer(is)
-	for {
-		t := lexer.NextToken()
-		if t.GetTokenType() == antlr.TokenEOF {
-			break
-		}
-		fmt.Printf("%s (%q)\n", lexer.SymbolicNames[t.GetTokenType()], t.GetText())
-	}
-	return nil // TODO: everything :cry:
+	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	p := parser.NewMODLParser(stream)
+	state := &unmarshaler{Names: p.RuleNames, stack: []interface{}{v}}
+	antlr.ParseTreeWalkerDefault.Walk(state, p.Modl())
+	return state.err
+}
+
+type unmarshaler struct {
+	*parser.BaseMODLParserListener
+	Names []string
+	stack []interface{}
+	err   error
+}
+
+func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
+	println(u.Names[ctx.GetRuleIndex()] + "\t" + ctx.GetText())
 }
