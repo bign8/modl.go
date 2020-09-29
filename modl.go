@@ -62,17 +62,18 @@ func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	value := u.pop()        // just finished parsing
 	v := indirect(u.peek()) // get to a solid footing
+	node := ctx.STRING()
+	if node == nil {
+		node = ctx.QUOTED()
+	}
+	key := node.GetText()
 	switch v.Kind() {
 	case reflect.Map:
-		if ctx.STRING() == nil {
-			return // TODO: QUOTED case
-		}
-		key := ctx.STRING().GetText()
 		v.SetMapIndex(reflect.ValueOf(key), value)
 	default:
 		println("What is this! " + v.Kind().String())
 	}
-	println("Exiting pair " + ctx.STRING().GetText() + " " + indirect(v).Kind().String())
+	println("Exiting pair " + node.GetText() + " " + indirect(v).Kind().String())
 }
 
 func (u *unmarshaler) ExitModl_value(ctx *parser.Modl_valueContext) {
