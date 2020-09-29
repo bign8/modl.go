@@ -16,25 +16,25 @@ var allow = map[string]bool{
 
 // MODL features that are KNOWN to not work (right now)
 var block = map[string]bool{
-	"load": true,
-	"method": true,
-	"conditional": true,
-	"punycode": true,
-	"class": true,
-	"array": true,
-	"object_ref": true,
-	"nbArray": true,
-	"map": true,
-	"pair": true,
+	"load":          true,
+	"method":        true,
+	"conditional":   true,
+	"punycode":      true,
+	"class":         true,
+	"array":         true,
+	"object_ref":    true,
+	"nbArray":       true,
+	"map":           true,
+	"pair":          true,
 	"string_method": true,
-	"version": true,
-	"undefined": true,
-	"graves": true,
-	"quotes": true,
-	"escape": true,
-	"unicode": true,
-	"@keys": true,
-	"refs": true,
+	"version":       true,
+	"undefined":     true,
+	"graves":        true,
+	"quotes":        true,
+	"escape":        true,
+	"unicode":       true,
+	"@keys":         true,
+	"refs":          true,
 }
 
 type grammarTest struct {
@@ -69,56 +69,35 @@ func (test grammarTest) Skip() bool {
 
 func (test grammarTest) Test(t *testing.T) {
 	var (
-		array = []interface{}{}
-		class = map[string]interface{}{}
-		exp   = []byte(test.Expected)
+		exp interface{}
+		got interface{}
 	)
+	if test.Expected[0] == '[' {
+		exp = []interface{}{}
+		got = []interface{}{}
+	} else {
+		exp = map[string]interface{}{}
+		got = map[string]interface{}{}
+	}
 	t.Logf("Input: %s", test.Input)
 	t.Logf("Expect: %s", test.Expected)
-	if err := json.Unmarshal(exp, &array); err == nil {
-		exp, err := json.Marshal(&array)
-		if err != nil {
-			t.Fatalf("Unable to re-serialize result: %q", err)
-		}
-		test.Expected = string(exp)
-		test.TestArray(t)
-	} else if err = json.Unmarshal(exp, &class); err == nil {
-		exp, err := json.Marshal(&class)
-		if err != nil {
-			t.Fatalf("Unable to re-serialize result: %q", err)
-		}
-		test.Expected = string(exp)
-		test.TestClass(t)
-	} else {
-		t.Fatalf("Unable to derive type of result: %q", test.Expected)
+	if err := json.Unmarshal([]byte(test.Expected), &exp); err != nil {
+		t.Fatalf("Unable to parse Expected JSON: %q", err.Error())
 	}
-}
-
-func (test grammarTest) TestArray(t *testing.T) {
-	subject := []interface{}{}
-	if err := Unmarshal([]byte(test.Input), &subject, nil); err != nil {
+	expBits, err := json.Marshal(&exp)
+	if err != nil {
+		t.Fatalf("Unable to re-serialzie Expected result: %q", err)
+	}
+	test.Expected = string(expBits)
+	if err := Unmarshal([]byte(test.Input), &got, nil); err != nil {
 		t.Fatalf("Unable to unmarshal modl %q: %q", test.Input, err)
 	}
-	bits, err := json.Marshal(&subject)
+	bits, err := json.Marshal(&got)
 	if err != nil {
-		t.Fatalf("Unable to json.Marshal response: %q: %q", subject, err)
+		t.Fatalf("Unable to json.Marshal parsed MODL: %q: %q", got, err)
 	}
-	if string(bits) != string(test.Expected) {
-		t.Fatalf("Failed Match\nExp: %s\nGot: %s", string(test.Expected), string(bits))
-	}
-}
-
-func (test grammarTest) TestClass(t *testing.T) {
-	subject := map[string]interface{}{}
-	if err := Unmarshal([]byte(test.Input), &subject, nil); err != nil {
-		t.Fatalf("Unable to unmarshal modl %q: %q", test.Input, err)
-	}
-	bits, err := json.Marshal(&subject)
-	if err != nil {
-		t.Fatalf("Unable to json.Marshal response: %q: %q", subject, err)
-	}
-	if string(bits) != string(test.Expected) {
-		t.Fatalf("Failed Match\nExp: %s\nGot: %s", string(test.Expected), string(bits))
+	if string(bits) != test.Expected {
+		t.Fatalf("Failed Match\nExp: %s\nGot: %s", test.Expected, string(bits))
 	}
 }
 
