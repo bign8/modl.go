@@ -10,6 +10,17 @@ import (
 // Going with allow list given the number of failures while starting...
 // will likely reverse to a block list once something starts working :cry:
 var allow = map[string]bool{
+	"62":  true,
+	"79":  true,
+	"144": true,
+	"146": true,
+	"190": true,
+	"206": true,
+	"278": true,
+	"286": true,
+	"297": true,
+	"334": true,
+	"343": true,
 	"361": true,
 	"362": true,
 }
@@ -25,15 +36,11 @@ var block = map[string]bool{
 	"object_ref":    true,
 	"nbArray":       true,
 	"map":           true,
-	"pair":          true,
 	"string_method": true,
 	"version":       true,
 	"undefined":     true,
-	"graves":        true,
-	"quotes":        true,
 	"escape":        true,
 	"unicode":       true,
-	"@keys":         true,
 	"refs":          true,
 }
 
@@ -56,8 +63,8 @@ func (test grammarTest) Skip() bool {
 	if test.Expected == "DELETED" {
 		return true
 	}
-	if testing.Short() && !allow[test.ID] {
-		return true
+	if testing.Short() {
+		return !allow[test.ID]
 	}
 	for _, feat := range test.Features {
 		if block[feat] {
