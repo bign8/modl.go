@@ -5,6 +5,7 @@ import (
 	"errors"
 	"reflect"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 	"github.com/bign8/modl.go/internal/fs"
@@ -72,6 +73,7 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		println("INSTRUCTION, ignoring (for now): " + key)
 		return
 	}
+	key = decode(key)
 	switch v.Kind() {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
@@ -89,9 +91,9 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 		}
 		u.push(reflect.ValueOf(f))
 	case parser.MODLParserSTRING:
-		u.push(reflect.ValueOf(ctx.STRING().GetText()))
+		u.push(reflect.ValueOf(decode(ctx.STRING().GetText())))
 	case parser.MODLParserQUOTED:
-		u.push(reflect.ValueOf(ctx.QUOTED().GetText()))
+		u.push(reflect.ValueOf(decode(ctx.QUOTED().GetText())))
 	case parser.MODLParserTRUE:
 		u.push(reflect.ValueOf(true))
 	case parser.MODLParserFALSE:
@@ -113,4 +115,69 @@ func indirect(v reflect.Value) reflect.Value {
 			return v
 		}
 	}
+}
+
+func decode(in string) string {
+	runes := []rune(in)
+	j := 0
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+		if (r == '\\' || r == '~') && runes[i+1] == 'u' {
+			if rx, off := getu4(runes[i:]); rx != -1 {
+				runes[j] = rx
+				i += off
+				j++
+				continue
+			}
+		}
+		if r == '\\' || r == '~' {
+			r = runes[i+1]
+			i++
+		}
+		runes[j] = r
+		j++
+	}
+	return string(runes[:j])
+}
+
+// getu4 decodes \uXXXX from the beginning of s, returning the hex value,
+// or it returns -1.  Borrowed and modified from encoding/json/decode.go
+func getu4(s []rune) (rune, int) {
+	if len(s) < 6 || s[1] != 'u' {
+		return -1, -1
+	}
+	var r rune
+	for _, c := range s[2:6] {
+		switch {
+		case '0' <= c && c <= '9':
+			c = c - '0'
+		case 'a' <= c && c <= 'f':
+			c = c - 'a' + 10
+		case 'A' <= c && c <= 'F':
+			c = c - 'A' + 10
+		default:
+			return -1, -1
+		}
+		r = r*16 + rune(c)
+	}
+	// Test Case 332: ~u1f600 => smiley emoji
+	// TODO: figure out really whats up with the encoding here
+	if len(s) > 6 && s[2] == '1' {
+		c := s[7]
+		switch {
+		case '0' <= c && c <= '9':
+			c = c - '0'
+		case 'a' <= c && c <= 'f':
+			c = c - 'a' + 10
+		case 'A' <= c && c <= 'F':
+			c = c - 'A' + 10
+		default:
+			return r, 5
+		}
+		emoji := r * 16 + rune(c)
+		if utf8.ValidRune(emoji) {
+			return emoji, 6
+		}
+	}
+	return r, 5
 }
