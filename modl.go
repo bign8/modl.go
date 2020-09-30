@@ -5,6 +5,7 @@ import (
 	"errors"
 	"reflect"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
@@ -93,7 +94,13 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 	case parser.MODLParserSTRING:
 		u.push(reflect.ValueOf(decode(ctx.STRING().GetText())))
 	case parser.MODLParserQUOTED:
-		u.push(reflect.ValueOf(decode(ctx.QUOTED().GetText())))
+		text := ctx.QUOTED().GetText()
+		if strings.HasPrefix(text, "`") && strings.HasSuffix(text, "`") {
+			text = text[1:len(text)-1]
+		} else if strings.HasPrefix(text, "\"") && strings.HasSuffix(text, "\"") {
+			text = text[1:len(text)-1]
+		}
+		u.push(reflect.ValueOf(decode(text)))
 	case parser.MODLParserTRUE:
 		u.push(reflect.ValueOf(true))
 	case parser.MODLParserFALSE:
