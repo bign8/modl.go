@@ -4,6 +4,7 @@ package modl
 import (
 	"errors"
 	"reflect"
+	"strconv"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 	"github.com/bign8/modl.go/internal/fs"
@@ -67,18 +68,39 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		node = ctx.QUOTED()
 	}
 	key := node.GetText()
+	if len(key) > 0 && key[0] == '*' {
+		println("INSTRUCTION, ignoring (for now): " + key)
+		return
+	}
 	switch v.Kind() {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
 	default:
 		println("What is this! " + v.Kind().String())
 	}
-	println("Exiting pair " + node.GetText() + " " + indirect(v).Kind().String())
 }
 
-func (u *unmarshaler) ExitModl_value(ctx *parser.Modl_valueContext) {
-	value := ctx.GetText() // not correct!!! can be a map, array, nb_array, pair or primitive!
-	u.push(reflect.ValueOf(value))
+func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
+	switch ctx.GetStart().GetTokenType() {
+	case parser.MODLParserNUMBER:
+		f, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
+		if err != nil {
+			panic(err)
+		}
+		u.push(reflect.ValueOf(f))
+	case parser.MODLParserSTRING:
+		u.push(reflect.ValueOf(ctx.STRING().GetText()))
+	case parser.MODLParserQUOTED:
+		u.push(reflect.ValueOf(ctx.QUOTED().GetText()))
+	case parser.MODLParserTRUE:
+		u.push(reflect.ValueOf(true))
+	case parser.MODLParserFALSE:
+		u.push(reflect.ValueOf(false))
+	case parser.MODLParserNULL:
+		u.push(reflect.ValueOf(nil))
+	default:
+		panic("UNKNOWN PRIMITIVE TYPE: " + ctx.GetText())
+	}
 }
 
 func indirect(v reflect.Value) reflect.Value {

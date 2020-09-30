@@ -10,38 +10,26 @@ import (
 // Going with allow list given the number of failures while starting...
 // will likely reverse to a block list once something starts working :cry:
 var allow = map[string]bool{
+	"3":   true,
 	"62":  true,
 	"79":  true,
+	"132": true,
 	"144": true,
 	"146": true,
+	"178": true,
+	"179": true,
 	"190": true,
+	"191": true,
+	"193": true,
 	"206": true,
 	"278": true,
 	"286": true,
 	"297": true,
+	"333": true,
 	"334": true,
 	"343": true,
 	"361": true,
 	"362": true,
-}
-
-// MODL features that are KNOWN to not work (right now)
-var block = map[string]bool{
-	"load":          true,
-	"method":        true,
-	"conditional":   true,
-	"punycode":      true,
-	"class":         true,
-	"array":         true,
-	"object_ref":    true,
-	"nbArray":       true,
-	"map":           true,
-	"string_method": true,
-	"version":       true,
-	"undefined":     true,
-	"escape":        true,
-	"unicode":       true,
-	"refs":          true,
 }
 
 type grammarTest struct {
@@ -66,11 +54,6 @@ func (test grammarTest) Skip() bool {
 	if testing.Short() {
 		return !allow[test.ID]
 	}
-	for _, feat := range test.Features {
-		if block[feat] {
-			return true
-		}
-	}
 	return false
 }
 
@@ -86,8 +69,6 @@ func (test grammarTest) Test(t *testing.T) {
 		exp = map[string]interface{}{}
 		got = map[string]interface{}{}
 	}
-	t.Logf("Input: %s", test.Input)
-	t.Logf("Expect: %s", test.Expected)
 	if err := json.Unmarshal([]byte(test.Expected), &exp); err != nil {
 		t.Fatalf("Unable to parse Expected JSON: %q", err.Error())
 	}
@@ -104,7 +85,7 @@ func (test grammarTest) Test(t *testing.T) {
 		t.Fatalf("Unable to json.Marshal parsed MODL: %q: %q", got, err)
 	}
 	if string(bits) != test.Expected {
-		t.Fatalf("Failed Match\nExp: %s\nGot: %s", test.Expected, string(bits))
+		t.Fatalf("Failed Match\nInp: %s\nExp: %s\nGot: %s", test.Input, test.Expected, string(bits))
 	}
 }
 
