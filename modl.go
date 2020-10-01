@@ -62,6 +62,13 @@ func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
 	println(u.Names[ctx.GetRuleIndex()] + "\t" + ctx.GetText())
 }
 
+func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
+	println("Manually injecting map (FUTURE: respect provided fields)")
+	m := map[string]interface{}{}
+	value := reflect.ValueOf(m)
+	u.push(value)
+}
+
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	value := u.pop()        // just finished parsing
 	v := indirect(u.peek()) // get to a solid footing
@@ -96,9 +103,9 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 	case parser.MODLParserQUOTED:
 		text := ctx.QUOTED().GetText()
 		if strings.HasPrefix(text, "`") && strings.HasSuffix(text, "`") {
-			text = text[1:len(text)-1]
+			text = text[1 : len(text)-1]
 		} else if strings.HasPrefix(text, "\"") && strings.HasSuffix(text, "\"") {
-			text = text[1:len(text)-1]
+			text = text[1 : len(text)-1]
 		}
 		u.push(reflect.ValueOf(decode(text)))
 	case parser.MODLParserTRUE:
@@ -167,13 +174,13 @@ func getu4(s []rune) (rune, int) {
 			c = c - 'A' + 10
 		default:
 			if i > 3 { // if we have at least 4 digits
-				return r, i+1
+				return r, i + 1
 			}
 			return -1, -1
 		}
 		q = r*16 + rune(c)
 		if !utf8.ValidRune(q) {
-			return r, i-1
+			return r, i - 1
 		}
 		r = q
 	}
