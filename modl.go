@@ -150,11 +150,14 @@ func decode(in string) string {
 // getu4 decodes \uXXXX from the beginning of s, returning the hex value,
 // or it returns -1.  Borrowed and modified from encoding/json/decode.go
 func getu4(s []rune) (rune, int) {
-	if len(s) < 6 || s[1] != 'u' {
+	if len(s) < 6 || s[1] != 'u' || !(s[0] == '\\' || s[0] == '~') {
 		return -1, -1
 	}
-	var r rune
-	for _, c := range s[2:6] {
+	var r, q rune
+	for i, c := range s[2:] {
+		if i >= 5 {
+			return r, 6 // longest unicode utf-8 is currently 6 bytes
+		}
 		switch {
 		case '0' <= c && c <= '9':
 			c = c - '0'
@@ -163,28 +166,16 @@ func getu4(s []rune) (rune, int) {
 		case 'A' <= c && c <= 'F':
 			c = c - 'A' + 10
 		default:
+			if i > 3 { // if we have at least 4 digits
+				return r, i+1
+			}
 			return -1, -1
 		}
-		r = r*16 + rune(c)
-	}
-	// Test Case 332: ~u1f600 => smiley emoji
-	// TODO: figure out really whats up with the encoding here
-	if len(s) > 6 && s[2] == '1' {
-		c := s[7]
-		switch {
-		case '0' <= c && c <= '9':
-			c = c - '0'
-		case 'a' <= c && c <= 'f':
-			c = c - 'a' + 10
-		case 'A' <= c && c <= 'F':
-			c = c - 'A' + 10
-		default:
-			return r, 5
+		q = r*16 + rune(c)
+		if !utf8.ValidRune(q) {
+			return r, i-1
 		}
-		emoji := r * 16 + rune(c)
-		if utf8.ValidRune(emoji) {
-			return emoji, 6
-		}
+		r = q
 	}
-	return r, 5
+	return r, len(s)
 }
