@@ -11,6 +11,8 @@ import (
 // will likely reverse to a block list once something starts working :cry:
 var allow = map[string]bool{
 	"3":   true,
+	"35":  true,
+	"36":  true,
 	"42":  true,
 	"62":  true,
 	"65":  true,

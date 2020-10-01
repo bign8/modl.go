@@ -69,6 +69,27 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 	u.push(value)
 }
 
+func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
+	value := u.pop()
+	ptr := u.peek() // TODO: assert is an pointer to an interface to an array
+	if ptr.Kind() != reflect.Ptr {
+		println("Exit Array (ptr): " + ptr.String())
+		return // faking it
+	}
+	itr := ptr.Elem()
+	if itr.Kind() != reflect.Interface {
+		println("Exit Array (itr): " + itr.String())
+		return // faking it
+	}
+	arr := itr.Elem()
+	if arr.Kind() != reflect.Slice {
+		println("Exit Array (arr): " + arr.Kind().String())
+		return // faking it
+	}
+	arr = reflect.Append(arr, value)
+	itr.Set(arr)
+}
+
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	value := u.pop()        // just finished parsing
 	v := indirect(u.peek()) // get to a solid footing
