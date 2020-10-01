@@ -134,7 +134,7 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 	case parser.MODLParserFALSE:
 		u.push(reflect.ValueOf(false))
 	case parser.MODLParserNULL:
-		u.push(reflect.ValueOf(nil))
+		u.push(reflect.ValueOf((*interface{})(nil)))
 	default:
 		panic("UNKNOWN PRIMITIVE TYPE: " + ctx.GetText())
 	}

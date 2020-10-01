@@ -19,6 +19,7 @@ var allow = map[string]bool{
 	"79":  true,
 	"85":  true,
 	"93":  true,
+	"95":  true,
 	"132": true,
 	"144": true,
 	"145": true,
