@@ -135,7 +135,7 @@ func (u *unmarshaler) exitArray(cnt int) {
 	// 	println("Item: " + item.String())
 	// }
 	if u.stack[ptr-1].Kind() != reflect.Slice {
-		println("exitArray: not a map... skipping")
+		println("exitArray: not a map... skipping: " + u.stack[ptr-1].Kind().String())
 		return
 	}
 	u.stack[ptr-1] = reflect.Append(u.stack[ptr-1], items...)
@@ -166,7 +166,8 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
 	default:
-		println("ExitModl_pair: What is this! " + v.Kind().String())
+		u.push(value) // put value back
+		println("ExitModl_pair: What is this: " + v.Kind().String())
 	}
 }
 

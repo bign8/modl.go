@@ -8,84 +8,66 @@ import (
 	"testing"
 )
 
-// Going with allow list given the number of failures while starting...
-// will likely reverse to a block list once something starts working :cry:
+// Known unsupported features; tests with this label are skipped
+var unsupported = map[string]bool{
+	"DELETED":       true,
+	"load":          true,
+	"object_ref":    true,
+	"conditional":   true,
+	"class":         true,
+	"method":        true,
+	"refs":          true,
+	"string_method": true,
+}
+
+// Tests on un-supported features, that pass due to noops
 var allow = map[string]bool{
-	"3":   true,
-	"35":  true,
-	"36":  true,
-	"42":  true,
-	"52":  true,
-	"55":  true,
-	"57":  true,
-	"62":  true,
-	"65":  true,
-	"79":  true,
-	"85":  true,
-	"93":  true,
-	"95":  true,
-	"132": true,
-	"137": true,
-	"138": true,
-	"144": true,
-	"145": true,
-	"146": true,
-	"147": true,
-	"178": true,
-	"179": true,
-	"189": true,
-	"190": true,
-	"191": true,
-	"193": true,
-	"194": true,
-	"195": true,
-	"196": true,
-	"197": true,
-	"198": true,
-	"199": true,
-	"200": true,
-	"201": true,
-	"203": true,
-	"204": true,
-	"205": true,
-	"206": true,
-	"207": true,
-	"208": true,
-	"209": true,
-	"210": true,
-	"213": true,
-	"214": true,
-	"215": true,
-	"216": true,
-	"225": true,
-	"227": true,
-	"229": true,
-	"234": true,
-	"235": true,
-	"270": true,
-	"271": true,
-	"278": true,
-	"286": true,
-	"287": true,
-	"288": true,
-	"292": true,
-	"293": true,
-	"294": true,
-	"295": true,
-	"296": true,
-	"297": true,
-	"303": true,
-	"316": true,
-	"321": true,
-	"322": true,
-	"324": true,
-	"325": true,
-	"332": true,
-	"333": true,
-	"334": true,
-	"343": true,
-	"361": true,
-	"362": true,
+	"3":   true, // noop load
+	"42":  true, // noop class
+	"85":  true, // noop class
+	"178": true, // noop load
+	"179": true, // noop load
+	"270": true, // noop load
+	"271": true, // noop load
+	"278": true, // noop method
+	"333": true, // noop load
+	"343": true, // noop replace
+}
+
+// Tests with supported features that don't quite work right :cry:
+var skip = map[string]bool {
+	"22":  true, // punycode (not 100% working yet)
+	"61":  true, // complicated map
+	"63":  true, // complicated map
+	"64":  true, // complicated map
+	"72":  true, // version (quoted key?)
+	"73":  true, // version (quoted key?)
+	"91":  true, // complicated objects + array
+	"118": true, // array of arrays
+	"167": true, // "undefined", object_ref/conditional
+	"187": true, // array of objects
+	"188": true, // array of objects
+	"192": true, // array of objects
+	"211": true, // array with null
+	"212": true, // array with null
+	"236": true, // "undefined", object_ref
+	"246": true, // complicated array
+	"248": true, // complicated array + null
+	"283": true, // "graves" with ref
+	"284": true, // "quotes" with ref
+	"298": true, // weird mixed quotes + graves
+	"314": true, // "escape" with ref
+	"315": true, // "escape" with ref
+	"323": true, // double parsed escape sequence on unicode
+	"341": true, // complicated array
+	"363": true, // unlabled refs
+	"364": true, // unlabled class
+	"365": true, // unlabled refs
+	"366": true, // unlabled refs
+	"367": true, // unlabled refs
+	"368": true, // unlabled refs
+	"369": true, // unlabled refs
+	"370": true, // unlabled class
 }
 
 type grammarTest struct {
@@ -108,7 +90,12 @@ func (test grammarTest) Skip() bool {
 		return true
 	}
 	if testing.Short() {
-		return !allow[test.ID]
+		for _, feat := range test.Features {
+			if unsupported[feat] {
+				return !allow[test.ID]
+			}
+		}
+		return skip[test.ID]
 	}
 	return false
 }
@@ -142,6 +129,8 @@ func (test grammarTest) Test(t *testing.T) {
 	}
 	if string(bits) != test.Expected {
 		t.Fatalf("Failed Match\nInp: %s\nExp: %s\nGot: %s", test.Input, test.Expected, string(bits))
+	} else {
+		t.Logf("Success!\nInp: %s\nGot: %s", test.Input, string(bits))
 	}
 }
 
@@ -161,9 +150,9 @@ func TestGrammar(t *testing.T) {
 	}
 }
 
-func chk(x interface{}) {
+func chk(tb testing.TB, x interface{}) {
 	y := reflect.ValueOf(x)
-	println(y.String())
+	tb.Log(y.String())
 }
 
 func TestBadInterfaceReflection(t *testing.T) {
@@ -171,7 +160,7 @@ func TestBadInterfaceReflection(t *testing.T) {
 	x := map[string]interface{}{}
 	var y interface{}
 	y = x
-	chk(&y)
+	chk(t, &y)
 	if err := json.Unmarshal([]byte("{\"a\": \"A\"}"), &y); err != nil {
 		t.Fatalf("Unmarshal: %v", err)
 	}
