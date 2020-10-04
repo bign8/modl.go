@@ -57,9 +57,41 @@ func (u *unmarshaler) pop() reflect.Value {
 	u.stack = u.stack[:tail]
 	return result
 }
+func (u *unmarshaler) debug() {
+	println("Stack Start ............ ")
+	for i, item := range u.stack {
+		println("Stack Item(" + strconv.Itoa(i) + "): " + item.String())
+	}
+	println("Stack End -------------- ")
+}
 
 func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
 	println(u.Names[ctx.GetRuleIndex()] + "\t" + ctx.GetText())
+}
+
+func (u *unmarshaler) EnterModl_structure(ctx *parser.Modl_structureContext) {
+	// Recurse through some externally provided interfaces (how I do tests :cry:)
+	//   x := map[string]interface{}{}
+	//   var y interface{}
+	//   y = x
+	//   Unmarshal(data, &y, nil)
+	// TODO: move to constructor? (note, this is not how json.Unmarshal works... might want to fix :cry:)
+	v := u.peek()
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
+	u.push(v)
+}
+
+func (u *unmarshaler) ExitModl_structure(ctx *parser.Modl_structureContext) {
+	// Unhack the aformentioned hack :cry:
+	v := u.pop()
+	top := u.peek()
+	if top.Kind() == reflect.Ptr {
+		top.Elem().Set(v)
+	} else {
+		println("Something not 100% right here exiting the structure")
+	}
 }
 
 func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
@@ -69,30 +101,35 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 	u.push(value)
 }
 
-func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
-	value := u.pop()
-	ptr := u.peek() // TODO: assert is an pointer to an interface to an array
-	if ptr.Kind() != reflect.Ptr {
-		println("Exit Array (ptr): " + ptr.String())
-		return // faking it
+func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
+	cnt := len(ctx.AllModl_array_item())
+	ptr := len(u.stack)-cnt
+	if ptr < 1 {
+		println("ExitModl_array: invalid stack... gtfo")
+		return
 	}
-	itr := ptr.Elem()
-	if itr.Kind() != reflect.Interface {
-		println("Exit Array (itr): " + itr.String())
-		return // faking it
+	items := u.stack[ptr:]
+	for _, item := range items {
+		println("Item: " + item.String())
 	}
-	arr := itr.Elem()
-	if arr.Kind() != reflect.Slice {
-		println("Exit Array (arr): " + arr.Kind().String())
-		return // faking it
+	if u.stack[ptr-1].Kind() != reflect.Slice {
+		println("ExitModl_array: not a map... skipping")
+		return
 	}
-	arr = reflect.Append(arr, value)
-	itr.Set(arr)
+	u.stack[ptr-1] = reflect.Append(u.stack[ptr-1], items...)
+	u.stack = u.stack[:ptr] // slice off the items in array
+	for _, item := range u.stack {
+		println("Stack: " + item.String())
+	}
 }
 
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
-	value := u.pop()        // just finished parsing
-	v := indirect(u.peek()) // get to a solid footing
+	value := u.pop()               // just finished parsing
+	if !u.peek().IsValid() {
+		println("ExitModl_pair: Unexpected state... gtfo")
+		return
+	}
+	v := indirect(u.peek(), false) // get to a solid footing
 	node := ctx.STRING()
 	if node == nil {
 		node = ctx.QUOTED()
@@ -140,16 +177,74 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 	}
 }
 
-func indirect(v reflect.Value) reflect.Value {
-	// TODO: set nil types if not interfaces (see encoding/json/decode.go:indirect)
+// TODO: set nil types if not interfaces (see encoding/json/decode.go:indirect)
+// indirect walks down v allocating pointers as needed,
+// until it gets to a non-pointer.
+// If it encounters an Unmarshaler, indirect stops and returns that.
+// If decodingNull is true, indirect stops at the first settable pointer so it
+// can be set to nil.
+func indirect(v reflect.Value, decodingNull bool) reflect.Value {
+	// Issue #24153 indicates that it is generally not a guaranteed property
+	// that you may round-trip a reflect.Value by calling Value.Addr().Elem()
+	// and expect the value to still be settable for values derived from
+	// unexported embedded struct fields.
+	//
+	// The logic below effectively does this when it first addresses the value
+	// (to satisfy possible pointer methods) and continues to dereference
+	// subsequent pointers as necessary.
+	//
+	// After the first round-trip, we set v back to the original value to
+	// preserve the original RW flags contained in reflect.Value.
+	v0 := v
+	haveAddr := false
+
+	// If v is a named type and is addressable,
+	// start with its address, so that if the type has pointer methods,
+	// we find them.
+	if v.Kind() != reflect.Ptr && v.Type().Name() != "" && v.CanAddr() {
+		haveAddr = true
+		v = v.Addr()
+	}
 	for {
-		switch v.Kind() {
-		case reflect.Ptr, reflect.Interface:
+		// Load value from interface, but only if the result will be
+		// usefully addressable.
+		if v.Kind() == reflect.Interface && !v.IsNil() {
+			e := v.Elem()
+			if e.Kind() == reflect.Ptr && !e.IsNil() && (!decodingNull || e.Elem().Kind() == reflect.Ptr) {
+				haveAddr = false
+				v = e
+				continue
+			}
+		}
+
+        if v.Kind() != reflect.Ptr {
+			break
+		}
+
+		if decodingNull && v.CanSet() {
+			break
+		}
+
+		// Prevent infinite loop if v is an interface pointing to its own address:
+		//     var v interface{}
+		//     v = &v
+		if v.Elem().Kind() == reflect.Interface && v.Elem().Elem() == v {
 			v = v.Elem()
-		default:
-			return v
+			break
+		}
+		if v.IsNil() {
+			v.Set(reflect.New(v.Type().Elem()))
+		}
+        // TODO: Unmarshaling type casting
+
+		if haveAddr {
+			v = v0 // restore original value after round-trip Value.Addr().Elem()
+			haveAddr = false
+		} else {
+			v = v.Elem()
 		}
 	}
+	return v
 }
 
 func decode(in string) string {

@@ -3,6 +3,7 @@ package modl
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -45,6 +46,8 @@ var allow = map[string]bool{
 	"216": true,
 	"234": true,
 	"235": true,
+	"270": true,
+	"271": true,
 	"278": true,
 	"286": true,
 	"287": true,
@@ -140,4 +143,21 @@ func TestGrammar(t *testing.T) {
 			t.Run(test.Name(), test.Test)
 		}
 	}
+}
+
+func chk(x interface{}) {
+	y := reflect.ValueOf(x)
+	println(y.String())
+}
+
+func TestBadInterfaceReflection(t *testing.T) {
+	// TODO: refactor tests so this isn't a problem
+	x := map[string]interface{}{}
+	var y interface{}
+	y = x
+	chk(&y)
+	if err := json.Unmarshal([]byte("{\"a\": \"A\"}"), &y); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	t.Logf("Something: %#v", x)
 }
