@@ -101,6 +101,24 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 	u.push(value)
 }
 
+func (u *unmarshaler) EnterModl_array_item(ctx *parser.Modl_array_itemContext) {
+	// Add an invalid type, in case we enter another array (don't re-use parent objects)
+	u.push(reflect.Value{})
+}
+
+func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
+	// Scan back to find the last invalid item (might have more than one item in an array) and remove it!
+	for i := len(u.stack)-1; i >= 0; i-- {
+		if u.stack[i].IsValid() {
+			continue
+		}
+		copy(u.stack[i:], u.stack[i+1:])
+		u.stack = u.stack[:len(u.stack)-1]
+		return
+	}
+	panic("ExitModl_array: did not find an invalid marker; invalid state")
+}
+
 func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
 	u.enterArray(len(ctx.AllModl_array_item()))
 }

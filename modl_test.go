@@ -37,11 +37,7 @@ var allow = map[string]bool{
 
 // Tests with supported features that don't quite work right :cry:
 var skip = map[string]bool {
-	"091": true, // complicated objects + array => {"test":{"array":[{"map":{}},{"array":[1,2,3]}],"map":{"array":[]}}
-	"118": true, // array of arrays => {"test":[["zero","one"],["a","b"]]}
 	"167": true, // missing_label => object_ref/conditional
-	"188": true, // array of objects => {"test":[{"number":1},{"number":2},{"number":3}]}
-	"192": true, // array of objects => [{"o":{"n":"test"}},{"o":{"n":"test2"}}]
 	"211": true, // array with null => {"o":[1,2,null,4,5]}
 	"212": true, // array with null => {"o":[1,2,null,4,5]}
 	"236": true, // missing_label => object_ref
