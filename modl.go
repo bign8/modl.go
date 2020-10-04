@@ -102,17 +102,32 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 }
 
 func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
+	u.enterArray(len(ctx.AllModl_array_item()))
+}
+
+func (u *unmarshaler) EnterModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
+	u.enterArray(len(ctx.AllModl_array_item()))
+}
+
+func (u *unmarshaler) enterArray(cnt int) {
 	if u.peek().Kind() != reflect.Slice {
-		a := make([]interface{}, 0, len(ctx.AllModl_array_item()))
+		a := make([]interface{}, 0, cnt)
 		u.push(reflect.ValueOf(a))
 	}
 }
 
 func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
-	cnt := len(ctx.AllModl_array_item())
+	u.exitArray(len(ctx.AllModl_array_item()))
+}
+
+func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
+	u.exitArray(len(ctx.AllModl_array_item()))
+}
+
+func (u *unmarshaler) exitArray(cnt int) {
 	ptr := len(u.stack)-cnt
 	if ptr < 1 {
-		println("ExitModl_array: invalid stack... gtfo")
+		println("exitArray: invalid stack... gtfo")
 		return
 	}
 	items := u.stack[ptr:]
@@ -120,7 +135,7 @@ func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
 	// 	println("Item: " + item.String())
 	// }
 	if u.stack[ptr-1].Kind() != reflect.Slice {
-		println("ExitModl_array: not a map... skipping")
+		println("exitArray: not a map... skipping")
 		return
 	}
 	u.stack[ptr-1] = reflect.Append(u.stack[ptr-1], items...)
