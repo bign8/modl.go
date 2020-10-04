@@ -90,7 +90,7 @@ func (u *unmarshaler) ExitModl_structure(ctx *parser.Modl_structureContext) {
 	if top.Kind() == reflect.Ptr {
 		top.Elem().Set(v)
 	} else {
-		println("Something not 100% right here exiting the structure")
+		println("ExitModl_structure: Not a pointer at top of stack?")
 	}
 }
 
@@ -101,6 +101,13 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 	u.push(value)
 }
 
+func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
+	if u.peek().Kind() != reflect.Slice {
+		a := make([]interface{}, 0, len(ctx.AllModl_array_item()))
+		u.push(reflect.ValueOf(a))
+	}
+}
+
 func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
 	cnt := len(ctx.AllModl_array_item())
 	ptr := len(u.stack)-cnt
@@ -109,18 +116,18 @@ func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
 		return
 	}
 	items := u.stack[ptr:]
-	for _, item := range items {
-		println("Item: " + item.String())
-	}
+	// for _, item := range items {
+	// 	println("Item: " + item.String())
+	// }
 	if u.stack[ptr-1].Kind() != reflect.Slice {
 		println("ExitModl_array: not a map... skipping")
 		return
 	}
 	u.stack[ptr-1] = reflect.Append(u.stack[ptr-1], items...)
 	u.stack = u.stack[:ptr] // slice off the items in array
-	for _, item := range u.stack {
-		println("Stack: " + item.String())
-	}
+	// for _, item := range u.stack {
+	// 	println("Stack: " + item.String())
+	// }
 }
 
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
@@ -144,7 +151,7 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
 	default:
-		println("What is this! " + v.Kind().String())
+		println("ExitModl_pair: What is this! " + v.Kind().String())
 	}
 }
 
