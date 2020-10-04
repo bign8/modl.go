@@ -145,6 +145,41 @@ func (u *unmarshaler) exitArray(cnt int) {
 	// }
 }
 
+func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
+	// Add an invalid type, in case we enter another pair (don't re-use parent objects)
+	u.push(reflect.Value{})
+}
+
+func (u *unmarshaler) ExitModl_value_item(ctx *parser.Modl_value_itemContext) {
+	v := u.pop()
+	if !v.IsValid() {
+		println("ExitModl_value_item: tip should be valid")
+		return
+	}
+	t := u.pop()
+	if t.IsValid() {
+		println("ExitModl_value_item: trying to pull invalid off failed")
+		return
+	}
+	u.push(v) // putting valid value back on!
+}
+
+func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
+	// See if parent has a property that can be set, matching our key
+	v0 := u.peek()
+	if v0.IsValid() {
+		v := indirect(v0, false) // ensure we are on solid ground
+		switch v.Kind() {
+		case reflect.Map:
+			// we "likely" support setting this as a key, don't overwrite existing map
+			return
+		}
+	}
+	m := map[string]interface{}{}
+	value := reflect.ValueOf(m)
+	u.push(value)
+}
+
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	value := u.pop()               // just finished parsing
 	if !u.peek().IsValid() {

@@ -18,7 +18,7 @@ var unsupported = map[string]bool{
 	"method":        true,
 	"refs":          true,
 	"string_method": true,
-	"punycode":      true,
+	"punycode":      true, // needs methods -> will use golang.org/x/net/idna::ToUnicode
 }
 
 // Tests on un-supported features, that pass due to noops
@@ -37,13 +37,9 @@ var allow = map[string]bool{
 
 // Tests with supported features that don't quite work right :cry:
 var skip = map[string]bool {
-	"061": true, // complicated map => {"a":{"b":"c"},"d":"e"}
-	"063": true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
-	"064": true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
 	"091": true, // complicated objects + array => {"test":{"array":[{"map":{}},{"array":[1,2,3]}],"map":{"array":[]}}
 	"118": true, // array of arrays => {"test":[["zero","one"],["a","b"]]}
 	"167": true, // missing_label => object_ref/conditional
-	"187": true, // array of objects => {"o":["test","test",{"t":["Customer Service",44123]}]}
 	"188": true, // array of objects => {"test":[{"number":1},{"number":2},{"number":3}]}
 	"192": true, // array of objects => [{"o":{"n":"test"}},{"o":{"n":"test2"}}]
 	"211": true, // array with null => {"o":[1,2,null,4,5]}
@@ -53,7 +49,6 @@ var skip = map[string]bool {
 	"248": true, // complicated array + null => x=[1;;;;;;;2:::::::::3;;;;;;;;;;4:::::::::5]
 	"283": true, // missing_label ref
 	"284": true, // missing_label ref
-	"298": true, // weird mixed quotes + graves (test mentions being controversial)
 	"314": true, // missing_label ref
 	"315": true, // missing_label ref
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
