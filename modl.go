@@ -183,11 +183,6 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 		u.push(reflect.ValueOf(decode(ctx.STRING().GetText())))
 	case parser.MODLParserQUOTED:
 		text := ctx.QUOTED().GetText()
-		if strings.HasPrefix(text, "`") && strings.HasSuffix(text, "`") {
-			text = text[1 : len(text)-1]
-		} else if strings.HasPrefix(text, "\"") && strings.HasSuffix(text, "\"") {
-			text = text[1 : len(text)-1]
-		}
 		u.push(reflect.ValueOf(decode(text)))
 	case parser.MODLParserTRUE:
 		u.push(reflect.ValueOf(true))
@@ -271,6 +266,11 @@ func indirect(v reflect.Value, decodingNull bool) reflect.Value {
 }
 
 func decode(in string) string {
+	if strings.HasPrefix(in, "`") && strings.HasSuffix(in, "`") {
+		in = in[1 : len(in)-1]
+	} else if strings.HasPrefix(in, "\"") && strings.HasSuffix(in, "\"") {
+		in = in[1 : len(in)-1]
+	}
 	runes := []rune(in)
 	j := 0
 	for i := 0; i < len(runes); i++ {

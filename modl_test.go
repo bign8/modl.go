@@ -18,6 +18,7 @@ var unsupported = map[string]bool{
 	"method":        true,
 	"refs":          true,
 	"string_method": true,
+	"punycode":      true,
 }
 
 // Tests on un-supported features, that pass due to noops
@@ -36,30 +37,27 @@ var allow = map[string]bool{
 
 // Tests with supported features that don't quite work right :cry:
 var skip = map[string]bool {
-	"22":  true, // punycode (not 100% working yet)
-	"61":  true, // complicated map
-	"63":  true, // complicated map
-	"64":  true, // complicated map
-	"72":  true, // version (quoted key?)
-	"73":  true, // version (quoted key?)
-	"91":  true, // complicated objects + array
-	"118": true, // array of arrays
-	"167": true, // "undefined", object_ref/conditional
-	"187": true, // array of objects
-	"188": true, // array of objects
-	"192": true, // array of objects
-	"211": true, // array with null
-	"212": true, // array with null
-	"236": true, // "undefined", object_ref
-	"246": true, // complicated array
-	"248": true, // complicated array + null
-	"283": true, // "graves" with ref
-	"284": true, // "quotes" with ref
-	"298": true, // weird mixed quotes + graves
-	"314": true, // "escape" with ref
-	"315": true, // "escape" with ref
-	"323": true, // double parsed escape sequence on unicode
-	"341": true, // complicated array
+	"61":  true, // complicated map => {"a":{"b":"c"},"d":"e"}
+	"63":  true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
+	"64":  true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
+	"91":  true, // complicated objects + array => {"test":{"array":[{"map":{}},{"array":[1,2,3]}],"map":{"array":[]}}
+	"118": true, // array of arrays => {"test":[["zero","one"],["a","b"]]}
+	"167": true, // missing_label => object_ref/conditional
+	"187": true, // array of objects => {"o":["test","test",{"t":["Customer Service",44123]}]}
+	"188": true, // array of objects => {"test":[{"number":1},{"number":2},{"number":3}]}
+	"192": true, // array of objects => [{"o":{"n":"test"}},{"o":{"n":"test2"}}]
+	"211": true, // array with null => {"o":[1,2,null,4,5]}
+	"212": true, // array with null => {"o":[1,2,null,4,5]}
+	"236": true, // missing_label => object_ref
+	"246": true, // complicated array => {"x":[1,[2,3,4]]}
+	"248": true, // complicated array + null => x=[1;;;;;;;2:::::::::3;;;;;;;;;;4:::::::::5]
+	"283": true, // missing_label ref
+	"284": true, // missing_label ref
+	"298": true, // weird mixed quotes + graves (test mentions being controversial)
+	"314": true, // missing_label ref
+	"315": true, // missing_label ref
+	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
+	"341": true, // complicated array => [[1,2,3],{"b":"c"},[4,5,6],{"d":"f"}]
 	"363": true, // unlabled refs
 	"364": true, // unlabled class
 	"365": true, // unlabled refs
