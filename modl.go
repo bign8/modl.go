@@ -73,7 +73,7 @@ func (u *unmarshaler) debug() {
 // 	println(u.Names[ctx.GetRuleIndex()] + "\tExit\t" + ctx.GetText())
 // }
 
-func (u *unmarshaler) EnterModl_structure(ctx *parser.Modl_structureContext) {
+func (u *unmarshaler) EnterModl(ctx *parser.ModlContext) {
 	// Recurse through some externally provided interfaces (how I do tests :cry:)
 	//   x := map[string]interface{}{}
 	//   var y interface{}
@@ -87,14 +87,14 @@ func (u *unmarshaler) EnterModl_structure(ctx *parser.Modl_structureContext) {
 	u.push(v)
 }
 
-func (u *unmarshaler) ExitModl_structure(ctx *parser.Modl_structureContext) {
+func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 	// Unhack the aformentioned hack :cry:
 	v := u.pop()
 	top := u.peek()
 	if top.Kind() == reflect.Ptr {
 		top.Elem().Set(v)
 	} else {
-		println("ExitModl_structure: Not a pointer at top of stack?")
+		println("ExitModl: Not a pointer at top of stack?")
 	}
 }
 
@@ -111,16 +111,17 @@ func (u *unmarshaler) EnterModl_array_item(ctx *parser.Modl_array_itemContext) {
 }
 
 func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
-	// Scan back to find the last invalid item (might have more than one item in an array) and remove it!
-	for i := len(u.stack)-1; i >= 0; i-- {
-		if u.stack[i].IsValid() {
-			continue
-		}
-		copy(u.stack[i:], u.stack[i+1:])
-		u.stack = u.stack[:len(u.stack)-1]
+	v := u.pop()
+	if !v.IsValid() {
+		panic("ExitModl_array_item(0): tip should be valid")
 		return
 	}
-	panic("ExitModl_array: did not find an invalid marker; invalid state")
+	t := u.pop()
+	if t.IsValid() {
+		println("ExitModl_array_item(1): marker should be invalid: " + t.String())
+		return
+	}
+	u.push(v) // putting valid value back on!
 }
 
 func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
@@ -132,7 +133,7 @@ func (u *unmarshaler) EnterModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
 }
 
 func (u *unmarshaler) enterArray(cnt int) {
-	if u.peek().Kind() != reflect.Slice {
+	if u.peek().Kind() != reflect.Slice { // TODO: is this check necessary?
 		a := make([]interface{}, 0, cnt)
 		u.push(reflect.ValueOf(a))
 	}
@@ -153,22 +154,16 @@ func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
 func (u *unmarshaler) exitArray(cnt int) {
 	ptr := len(u.stack)-cnt
 	if ptr < 1 {
-		println("exitArray: invalid stack... gtfo")
+		panic("exitArray: invalid stack... gtfo")
 		return
 	}
 	items := u.stack[ptr:]
-	// for _, item := range items {
-	// 	println("Item: " + item.String())
-	// }
 	if u.stack[ptr-1].Kind() != reflect.Slice {
 		println("exitArray: not a map... skipping: " + u.stack[ptr-1].Kind().String())
 		return
 	}
 	u.stack[ptr-1] = reflect.Append(u.stack[ptr-1], items...)
 	u.stack = u.stack[:ptr] // slice off the items in array
-	// for _, item := range u.stack {
-	// 	println("Stack: " + item.String())
-	// }
 }
 
 func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
@@ -179,12 +174,12 @@ func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
 func (u *unmarshaler) ExitModl_value_item(ctx *parser.Modl_value_itemContext) {
 	v := u.pop()
 	if !v.IsValid() {
-		println("ExitModl_value_item: tip should be valid")
+		panic("ExitModl_value_item(0): tip should be valid")
 		return
 	}
 	t := u.pop()
 	if t.IsValid() {
-		println("ExitModl_value_item: trying to pull invalid off failed")
+		println("ExitModl_value_item(1): marker should be invalid: " + t.String())
 		return
 	}
 	u.push(v) // putting valid value back on!
