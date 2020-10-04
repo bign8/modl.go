@@ -41,7 +41,6 @@ var skip = map[string]bool {
 	"211": true, // array with null => {"o":[1,2,null,4,5]}
 	"212": true, // array with null => {"o":[1,2,null,4,5]}
 	"236": true, // missing_label => object_ref
-	"246": true, // complicated array => {"x":[1,[2,3,4]]}
 	"248": true, // complicated array + null => x=[1;;;;;;;2:::::::::3;;;;;;;;;;4:::::::::5]
 	"283": true, // missing_label ref
 	"284": true, // missing_label ref

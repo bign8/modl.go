@@ -65,9 +65,13 @@ func (u *unmarshaler) debug() {
 	println("Stack End -------------- ")
 }
 
-func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
-	println(u.Names[ctx.GetRuleIndex()] + "\t" + ctx.GetText())
-}
+// func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
+// 	println(u.Names[ctx.GetRuleIndex()] + "\tEnter\t" + ctx.GetText())
+// }
+
+// func (u *unmarshaler) ExitEveryRule(ctx antlr.ParserRuleContext) {
+// 	println(u.Names[ctx.GetRuleIndex()] + "\tExit\t" + ctx.GetText())
+// }
 
 func (u *unmarshaler) EnterModl_structure(ctx *parser.Modl_structureContext) {
 	// Recurse through some externally provided interfaces (how I do tests :cry:)
@@ -135,10 +139,14 @@ func (u *unmarshaler) enterArray(cnt int) {
 }
 
 func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
-	u.exitArray(len(ctx.AllModl_array_item()))
+	// A modl_array can be a mix of either modl_array_item's or modl_nb_array's
+	// ( ( modl_array_item | modl_nb_array ) (STRUCT_SEP+ ( modl_array_item | modl_nb_array ) STRUCT_SEP* )* )?
+	u.exitArray(len(ctx.AllModl_array_item()) + len(ctx.AllModl_nb_array()))
 }
 
 func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
+	// modl_nb_arrays can ONLY be modl_array_item's
+	// ( modl_array_item COLON+ )+ ( modl_array_item )* COLON?
 	u.exitArray(len(ctx.AllModl_array_item()))
 }
 
