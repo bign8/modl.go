@@ -23,9 +23,9 @@ var unsupported = map[string]bool{
 
 // Tests on un-supported features, that pass due to noops
 var allow = map[string]bool{
-	"3":   true, // noop load
-	"42":  true, // noop class
-	"85":  true, // noop class
+	"003": true, // noop load
+	"042": true, // noop class
+	"085": true, // noop class
 	"178": true, // noop load
 	"179": true, // noop load
 	"270": true, // noop load
@@ -37,10 +37,10 @@ var allow = map[string]bool{
 
 // Tests with supported features that don't quite work right :cry:
 var skip = map[string]bool {
-	"61":  true, // complicated map => {"a":{"b":"c"},"d":"e"}
-	"63":  true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
-	"64":  true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
-	"91":  true, // complicated objects + array => {"test":{"array":[{"map":{}},{"array":[1,2,3]}],"map":{"array":[]}}
+	"061": true, // complicated map => {"a":{"b":"c"},"d":"e"}
+	"063": true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
+	"064": true, // complicated map => {"a":{"b":{"c":{"d":{"e":"f"}}}}}
+	"091": true, // complicated objects + array => {"test":{"array":[{"map":{}},{"array":[1,2,3]}],"map":{"array":[]}}
 	"118": true, // array of arrays => {"test":[["zero","one"],["a","b"]]}
 	"167": true, // missing_label => object_ref/conditional
 	"187": true, // array of objects => {"o":["test","test",{"t":["Customer Service",44123]}]}
@@ -142,6 +142,9 @@ func TestGrammar(t *testing.T) {
 		t.Fatal("Unable to deserialize tests: " + err.Error())
 	}
 	for _, test := range tests {
+		for len(test.ID) < 3 {
+			test.ID = "0" + test.ID
+		}
 		if !test.Skip() {
 			t.Run(test.Name(), test.Test)
 		}
