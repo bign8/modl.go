@@ -26,6 +26,7 @@ var allow = map[string]bool{
 	"003": true, // noop load
 	"042": true, // noop class
 	"085": true, // noop class
+	"162": true, // noop ref
 	"178": true, // noop load
 	"179": true, // noop load
 	"270": true, // noop load
@@ -33,6 +34,10 @@ var allow = map[string]bool{
 	"278": true, // noop method
 	"333": true, // noop load
 	"343": true, // noop replace
+	"349": true, // noop ref
+	"351": true, // noop ref
+	"353": true, // noop ref
+	"355": true, // noop ref
 }
 
 // Tests with supported features that don't quite work right :cry:
@@ -41,8 +46,6 @@ var skip = map[string]bool{
 	"236": true, // missing_label => object_ref
 	"283": true, // missing_label ref
 	"284": true, // missing_label ref
-	"314": true, // missing_label ref
-	"315": true, // missing_label ref
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
 	"363": true, // unlabled refs
 	"364": true, // unlabled class

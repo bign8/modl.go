@@ -92,7 +92,8 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 	for _, v := range u.stack {
 		if !v.IsValid() {
 			u.debug()
-			panic("TODO(fixme): invalid in Stack")
+			println("TODO(fixme): invalid in Stack")
+			return
 		}
 	}
 
@@ -246,8 +247,8 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		node = ctx.QUOTED()
 	}
 	key := node.GetText()
-	if len(key) > 0 && key[0] == '*' {
-		// println("TODO: INSTRUCTION, ignoring (for now): " + key)
+	if len(key) > 0 && (key[0] == '*' || key[0] == '_') {
+		println("TODO: INSTRUCTION or UNDERSCORE, ignoring (for now): " + key)
 		return
 	}
 	key = decode(key)
