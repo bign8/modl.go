@@ -88,14 +88,25 @@ func (u *unmarshaler) EnterModl(ctx *parser.ModlContext) {
 }
 
 func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
-	// Unhack the aformentioned hack :cry:
-	v := u.pop()
-	top := u.peek()
-	if top.Kind() == reflect.Ptr {
-		top.Elem().Set(v)
-	} else {
-		println("ExitModl(TODO): Not a pointer at top of stack?")
+	// Verify the stack is still valid (should generally be a noop)
+	for _, v := range u.stack {
+		if !v.IsValid() {
+			u.debug()
+			panic("TODO(fixme): invalid in Stack")
+		}
 	}
+
+	// Iff we have more than 2 items (pointer and structure), we must have generated an array
+	if len(u.stack) != 2 {
+		arr := reflect.ValueOf(make([]interface{}, 0, len(u.stack)-1))
+		arr = reflect.Append(arr, u.stack[1:]...)
+		u.stack[0].Elem().Set(arr)
+		return
+	}
+
+	// Otherwise, we have 2 items, pop the "value" and assign to "ptr"
+	v := u.pop()
+	u.peek().Elem().Set(v)
 }
 
 func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {

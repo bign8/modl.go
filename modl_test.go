@@ -44,7 +44,6 @@ var skip = map[string]bool{
 	"314": true, // missing_label ref
 	"315": true, // missing_label ref
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
-	"341": true, // complicated array => [[1,2,3],{"b":"c"},[4,5,6],{"d":"f"}]
 	"363": true, // unlabled refs
 	"364": true, // unlabled class
 	"365": true, // unlabled refs
