@@ -99,7 +99,7 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 }
 
 func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
-	println("Manually injecting map (FUTURE: respect provided fields)")
+	// println("Manually injecting map (TODO: respect provided fields)")
 	m := map[string]interface{}{}
 	value := reflect.ValueOf(m)
 	u.push(value)
@@ -125,10 +125,14 @@ func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
 }
 
 func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
-	u.enterArray(len(ctx.AllModl_array_item()))
+	// A modl_array can be a mix of either modl_array_item's or modl_nb_array's
+	// ( ( modl_array_item | modl_nb_array ) (STRUCT_SEP+ ( modl_array_item | modl_nb_array ) STRUCT_SEP* )* )?
+	u.enterArray(len(ctx.AllModl_array_item()) + len(ctx.AllModl_nb_array()))
 }
 
 func (u *unmarshaler) EnterModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
+	// modl_nb_arrays can ONLY be modl_array_item's
+	// ( modl_array_item COLON+ )+ ( modl_array_item )* COLON?
 	u.enterArray(len(ctx.AllModl_array_item()))
 }
 
@@ -142,28 +146,48 @@ func (u *unmarshaler) enterArray(cnt int) {
 func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
 	// A modl_array can be a mix of either modl_array_item's or modl_nb_array's
 	// ( ( modl_array_item | modl_nb_array ) (STRUCT_SEP+ ( modl_array_item | modl_nb_array ) STRUCT_SEP* )* )?
-	u.exitArray(len(ctx.AllModl_array_item()) + len(ctx.AllModl_nb_array()))
+	seps := ctx.AllSTRUCT_SEP()
+	markers := make([]int, len(seps))
+	for i, sep := range seps {
+		markers[i] = sep.GetSymbol().GetStart()
+	}
+	u.exitArray(len(ctx.AllModl_array_item()) + len(ctx.AllModl_nb_array()), markers)
 }
 
 func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
 	// modl_nb_arrays can ONLY be modl_array_item's
 	// ( modl_array_item COLON+ )+ ( modl_array_item )* COLON?
-	u.exitArray(len(ctx.AllModl_array_item()))
+	colons := ctx.AllCOLON()
+	markers := make([]int, len(colons))
+	for i, colon := range colons {
+		markers[i] = colon.GetSymbol().GetStart()
+	}
+	u.exitArray(len(ctx.AllModl_array_item()), markers)
 }
 
-func (u *unmarshaler) exitArray(cnt int) {
+func (u *unmarshaler) exitArray(cnt int, markers []int) {
 	ptr := len(u.stack)-cnt
 	if ptr < 1 {
 		panic("exitArray: invalid stack... gtfo")
 		return
 	}
 	items := u.stack[ptr:]
-	if u.stack[ptr-1].Kind() != reflect.Slice {
-		println("exitArray: not a map... skipping: " + u.stack[ptr-1].Kind().String())
+	arr := u.stack[ptr-1]
+	if arr.Kind() != reflect.Slice {
+		println("exitArray: not a map... skipping: " + arr.Kind().String())
 		return
 	}
-	u.stack[ptr-1] = reflect.Append(u.stack[ptr-1], items...)
-	u.stack = u.stack[:ptr] // slice off the items in array
+
+	// Inject NULLs for adjacent markers (array item separators)
+	for i := 1; i < len(markers) - 1; i++ {
+		if markers[i-1] + 1 == markers[i] {
+			items = append(items, reflect.Value{}) // make space for null value
+			copy(items[i+1:], items[i:]) // shifting elements
+			items[i] = reflect.New(arr.Type().Elem()) // Null item (based on array type)
+		}
+	}
+	u.stack[ptr-1] = reflect.Append(arr, items...) // Append the elements into the slice
+	u.stack = u.stack[:ptr] // slice off the items from the stack
 }
 
 func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
@@ -214,7 +238,7 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	}
 	key := node.GetText()
 	if len(key) > 0 && key[0] == '*' {
-		println("INSTRUCTION, ignoring (for now): " + key)
+		// println("TODO: INSTRUCTION, ignoring (for now): " + key)
 		return
 	}
 	key = decode(key)
