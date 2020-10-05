@@ -36,10 +36,9 @@ var allow = map[string]bool{
 }
 
 // Tests with supported features that don't quite work right :cry:
-var skip = map[string]bool {
+var skip = map[string]bool{
 	"167": true, // missing_label => object_ref/conditional
 	"236": true, // missing_label => object_ref
-	"248": true, // complicated array + null => x=[1;;;;;;;2:::::::::3;;;;;;;;;;4:::::::::5]
 	"283": true, // missing_label ref
 	"284": true, // missing_label ref
 	"314": true, // missing_label ref

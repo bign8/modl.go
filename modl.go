@@ -64,6 +64,12 @@ func (u *unmarshaler) debug() {
 	}
 	println("Stack End -------------- ")
 }
+func debug(list []reflect.Value) {
+	println("Debugging List " + strconv.Itoa(len(list)))
+	for i, l := range list {
+		println("\tItem(" + strconv.Itoa(i) + "): " + l.String())
+	}
+}
 
 // func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
 // 	println(u.Names[ctx.GetRuleIndex()] + "\tEnter\t" + ctx.GetText())
@@ -79,12 +85,6 @@ func (u *unmarshaler) EnterModl(ctx *parser.ModlContext) {
 	//   var y interface{}
 	//   y = x
 	//   Unmarshal(data, &y, nil)
-	// TODO: move to constructor? (note, this is not how json.Unmarshal works... might want to fix :cry:)
-	v := u.peek()
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
-	u.push(v)
 }
 
 func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
@@ -94,7 +94,7 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 	if top.Kind() == reflect.Ptr {
 		top.Elem().Set(v)
 	} else {
-		println("ExitModl: Not a pointer at top of stack?")
+		println("ExitModl(TODO): Not a pointer at top of stack?")
 	}
 }
 
@@ -137,10 +137,8 @@ func (u *unmarshaler) EnterModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
 }
 
 func (u *unmarshaler) enterArray(cnt int) {
-	if u.peek().Kind() != reflect.Slice { // TODO: is this check necessary?
-		a := make([]interface{}, 0, cnt)
-		u.push(reflect.ValueOf(a))
-	}
+	a := make([]interface{}, 0, cnt)
+	u.push(reflect.ValueOf(a))
 }
 
 func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
@@ -151,7 +149,7 @@ func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
 	for i, sep := range seps {
 		markers[i] = sep.GetSymbol().GetStart()
 	}
-	u.exitArray(len(ctx.AllModl_array_item()) + len(ctx.AllModl_nb_array()), markers)
+	u.exitArray(len(ctx.AllModl_array_item())+len(ctx.AllModl_nb_array()), markers)
 }
 
 func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
@@ -166,7 +164,7 @@ func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
 }
 
 func (u *unmarshaler) exitArray(cnt int, markers []int) {
-	ptr := len(u.stack)-cnt
+	ptr := len(u.stack) - cnt
 	if ptr < 1 {
 		panic("exitArray: invalid stack... gtfo")
 		return
@@ -174,20 +172,20 @@ func (u *unmarshaler) exitArray(cnt int, markers []int) {
 	items := u.stack[ptr:]
 	arr := u.stack[ptr-1]
 	if arr.Kind() != reflect.Slice {
-		println("exitArray: not a map... skipping: " + arr.Kind().String())
+		println("exitArray: not a slice... skipping: " + arr.Kind().String())
 		return
 	}
 
 	// Inject NULLs for adjacent markers (array item separators)
-	for i := 1; i < len(markers) - 1; i++ {
-		if markers[i-1] + 1 == markers[i] {
-			items = append(items, reflect.Value{}) // make space for null value
-			copy(items[i+1:], items[i:]) // shifting elements
+	for i := 1; i < len(markers); i++ {
+		if markers[i-1]+1 == markers[i] {
+			items = append(items, reflect.Value{})    // make space for null value
+			copy(items[i+1:], items[i:])              // shifting elements
 			items[i] = reflect.New(arr.Type().Elem()) // Null item (based on array type)
 		}
 	}
 	u.stack[ptr-1] = reflect.Append(arr, items...) // Append the elements into the slice
-	u.stack = u.stack[:ptr] // slice off the items from the stack
+	u.stack = u.stack[:ptr]                        // slice off the items from the stack
 }
 
 func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
@@ -226,7 +224,7 @@ func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
 }
 
 func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
-	value := u.pop()               // just finished parsing
+	value := u.pop() // just finished parsing
 	if !u.peek().IsValid() {
 		println("ExitModl_pair: Unexpected state... gtfo")
 		return
@@ -315,7 +313,7 @@ func indirect(v reflect.Value, decodingNull bool) reflect.Value {
 			}
 		}
 
-        if v.Kind() != reflect.Ptr {
+		if v.Kind() != reflect.Ptr {
 			break
 		}
 
@@ -333,7 +331,7 @@ func indirect(v reflect.Value, decodingNull bool) reflect.Value {
 		if v.IsNil() {
 			v.Set(reflect.New(v.Type().Elem()))
 		}
-        // TODO: Unmarshaling type casting
+		// TODO: Unmarshaling type casting
 
 		if haveAddr {
 			v = v0 // restore original value after round-trip Value.Addr().Elem()
