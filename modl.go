@@ -458,7 +458,7 @@ func getu4(s []rune) (rune, int) {
 }
 
 func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
-	stop := strings.IndexAny(str, " %`")
+	stop := strings.IndexAny(str, " %`/")
 	if stop == -1 {
 		stop = len(str)
 	} else if stop == 0 && str[stop] == '`' {

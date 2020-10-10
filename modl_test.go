@@ -79,7 +79,6 @@ var skip = map[string]bool{
 	"329": true, // WIP: obj-ref - load, num-record, question
 	"330": true, // WIP: obj-ref - dots, array
 	"331": true, // WIP: obj-ref - load
-	"347": true, // WIP: refs - _locale=uk;url=`https://www.example.com/%locale/file` - slash termination
 	"359": true, // WIP: refs - inline string punycode
 	"360": true, // WIP: refs - dots
 	"364": true, // unlabled class
