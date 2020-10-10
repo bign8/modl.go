@@ -461,6 +461,14 @@ func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
 	stop := strings.IndexAny(str, " %`")
 	if stop == -1 {
 		stop = len(str)
+	} else if stop == 0 && str[stop] == '`' {
+		stop := strings.IndexByte(str[1:], '`')
+		if stop == -1 {
+			return str, 0 // end of word: %prev-resolve%`%`
+		}
+		word := str[1:stop+1]
+		// TODO: punycode?
+		return word, stop+2 // account for both graves
 	}
 	word := str[:stop]
 	if len(word) == 0 {

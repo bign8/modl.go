@@ -15,7 +15,6 @@ var unsupported = map[string]bool{
 	"conditional":   true,
 	"class":         true,
 	"method":        true,
-	"refs":          true,
 	"string_method": true,
 	"punycode":      true, // needs methods -> will use golang.org/x/net/idna::ToUnicode
 }
@@ -74,15 +73,15 @@ var skip = map[string]bool{
 	"237": true, // WIP: obj-ref - dots
 	"247": true, // WIP: obj-ref - dots, array
 	"273": true, // WIP: obj-ref - string functions
-	"283": true, // missing_label ref
-	"284": true, // missing_label ref
 	"285": true, // WIP: obj-ref - string functions
 	"299": true, // WIP: obj-ref - string functions
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
 	"329": true, // WIP: obj-ref - load, num-record, question
 	"330": true, // WIP: obj-ref - dots, array
 	"331": true, // WIP: obj-ref - load
-	"363": true, // unlabled refs
+	"347": true, // WIP: refs - _locale=uk;url=`https://www.example.com/%locale/file` - slash termination
+	"359": true, // WIP: refs - inline string punycode
+	"360": true, // WIP: refs - dots
 	"364": true, // unlabled class
 	"365": true, // unlabled refs
 	"366": true, // unlabled refs
