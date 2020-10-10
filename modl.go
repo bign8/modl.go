@@ -458,18 +458,16 @@ func getu4(s []rune) (rune, int) {
 }
 
 func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
-	stop := strings.IndexAny(str, " %")
+	stop := strings.IndexAny(str, " %`")
 	if stop == -1 {
 		stop = len(str)
-	} else {
-		stop++ // want to include the stop character in our slicing measurement
 	}
 	word := str[:stop]
 	if len(word) == 0 {
 		return str, 0
 	}
-	if word[len(word)-1] == '%' {
-		word = word[:len(word)-1]
+	if stop < len(str) && str[stop] == '%' {
+		stop++ // include terminating %
 	}
 	kind, ok := u.typez[word]
 	if !ok {

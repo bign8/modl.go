@@ -78,8 +78,6 @@ var skip = map[string]bool{
 	"284": true, // missing_label ref
 	"285": true, // WIP: obj-ref - string functions
 	"299": true, // WIP: obj-ref - string functions
-	"308": true, // WIP: obj-ref - weird, closure [SHOULD WORK?] - number, stop on space
-	"312": true, // WIP: obj-ref - weird, closure [SHOULD WORK?] - number, stop on grave
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
 	"329": true, // WIP: obj-ref - load, num-record, question
 	"330": true, // WIP: obj-ref - dots, array
