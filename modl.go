@@ -477,6 +477,9 @@ func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
 	}
 	rep, ok = kind.Interface().(string)
 	if !ok {
+		if num, ok := kind.Interface().(float64); ok {
+			return strconv.FormatFloat(num, 'G', -1, 64), stop
+		}
 		return str, 0
 	}
 	return rep, stop

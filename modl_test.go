@@ -40,58 +40,50 @@ var allow = map[string]bool{
 }
 
 // Tests with supported features that don't quite work right :cry:
+// WHERE question == "object index" (5.2) of modl spec
 var skip = map[string]bool{
-	"040": true, // WIP: obj-ref
-	"048": true, // WIP: obj-ref
-	"049": true, // WIP: obj-ref
-	"050": true, // WIP: obj-ref
-	"051": true, // WIP: obj-ref
-	"058": true, // WIP: obj-ref
-	"059": true, // WIP: obj-ref
-	"060": true, // WIP: obj-ref
-	"096": true, // WIP: obj-ref
-	"098": true, // WIP: obj-ref
-	"100": true, // WIP: obj-ref
-	"101": true, // WIP: obj-ref
-	"114": true, // WIP: obj-ref
-	"115": true, // WIP: obj-ref
-	"116": true, // WIP: obj-ref
-	"120": true, // WIP: obj-ref
-	"124": true, // WIP: obj-ref
-	"125": true, // WIP: obj-ref
-	"140": true, // WIP: obj-ref
-	"141": true, // WIP: obj-ref
-	"143": true, // WIP: obj-ref
-	"161": true, // WIP: obj-ref
+	"040": true, // WIP: obj-ref - _test=[[a;b]];letters2=%test.0.0 - dots, array
+	"048": true, // WIP: obj-ref - ?[[a;b;c]];letters=%0 - question
+	"049": true, // WIP: obj-ref - ?=[a;b;c;d]:[1;2;3;4;5];test=%1.0 - question, dots
+	"050": true, // WIP: obj-ref - _test=123;object(print_test = %test.test) - dots, stop, early
+	"051": true, // WIP: obj-ref - <OMITTED> - question
+	"058": true, // WIP: obj-ref - _test=(a=b=c=d=f);x=%test.a.b.c.d - dots
+	"059": true, // WIP: obj-ref - a(b(c(d(e(f=1)))));testing=%a.b.c.d.e.f - dots
+	"060": true, // WIP: obj-ref - _test=(a=b=c=d=f);testing=%test.a.b.c.d - dots
+	"096": true, // WIP: obj-ref - _person(name(first=John;last=Smith));say=%person.name.first - dots
+	"098": true, // WIP: obj-ref - _C=gb;_COUNTRIES(gb=ASDF);name=%COUNTRIES.%C - dots, double lookup
+	"100": true, // WIP: obj-ref - _person(name(first="John"));a=%person.name.first - dots
+	"101": true, // WIP: obj-ref - ?=[a;b;c;d]:[1;2;3;4;5];test=%1 - question
+	"114": true, // WIP: obj-ref - ?[[a;b;c];[one;two;three]];letters=%0;numbers=%1 - question
+	"115": true, // WIP: obj-ref - ?=[a;b;c]:[one;two;three];letters=%0;numbers=%1 - question
+	"116": true, // WIP: obj-ref - ?[a;b;c];letters=%0 - question
+	"120": true, // WIP: obj-ref - <OMITTED> - question
+	"124": true, // WIP: obj-ref - _test[a;b;c];alex=%test.0 - dots, array
+	"125": true, // WIP: obj-ref - ?[a;b;c];alex=%0 - question
+	"140": true, // WIP: obj-ref - question
+	"141": true, // WIP: obj-ref - question
+	"143": true, // WIP: obj-ref - question
+	"161": true, // WIP: obj-ref - flat-return-null?
 	"167": true, // missing_label => object_ref/conditional
-	"217": true, // WIP: obj-ref
-	"218": true, // WIP: obj-ref
-	"221": true, // WIP: obj-ref
-	"222": true, // WIP: obj-ref
-	"223": true, // WIP: obj-ref
+	"217": true, // WIP: obj-ref - dots, array
+	"218": true, // WIP: obj-ref - dots
+	"221": true, // WIP: obj-ref - dots, array, object
+	"222": true, // WIP: obj-ref - dots, array, object
+	"223": true, // WIP: obj-ref - dots, object
 	"236": true, // missing_label => object_ref
-	"237": true, // WIP: obj-ref
-	"247": true, // WIP: obj-ref
-	"272": true, // WIP: obj-ref
-	"273": true, // WIP: obj-ref
-	"275": true, // WIP: obj-ref
-	"276": true, // WIP: obj-ref
+	"237": true, // WIP: obj-ref - dots
+	"247": true, // WIP: obj-ref - dots, array
+	"273": true, // WIP: obj-ref - string functions
 	"283": true, // missing_label ref
 	"284": true, // missing_label ref
-	"285": true, // WIP: obj-ref
-	"299": true, // WIP: obj-ref
-	"304": true, // WIP: obj-ref
-	"305": true, // WIP: obj-ref
-	"306": true, // WIP: obj-ref
-	"308": true, // WIP: obj-ref
-	"309": true, // WIP: obj-ref
-	"310": true, // WIP: obj-ref
-	"311": true, // WIP: obj-ref
-	"312": true, // WIP: obj-ref
+	"285": true, // WIP: obj-ref - string functions
+	"299": true, // WIP: obj-ref - string functions
+	"308": true, // WIP: obj-ref - weird, closure [SHOULD WORK?] - number, stop on space
+	"312": true, // WIP: obj-ref - weird, closure [SHOULD WORK?] - number, stop on grave
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
-	"329": true, // WIP: obj-ref
-	"330": true, // WIP: obj-ref
-	"331": true, // WIP: obj-ref
+	"329": true, // WIP: obj-ref - load, num-record, question
+	"330": true, // WIP: obj-ref - dots, array
+	"331": true, // WIP: obj-ref - load
 	"363": true, // unlabled refs
 	"364": true, // unlabled class
 	"365": true, // unlabled refs
