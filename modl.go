@@ -3,6 +3,7 @@ package modl
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -28,7 +29,7 @@ func Unmarshal(data []byte, v interface{}, files fs.FS) error {
 	lexer := parser.NewMODLLexer(is)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	p := parser.NewMODLParser(stream)
-	state := &unmarshaler{Names: p.RuleNames}
+	state := &unmarshaler{Names: p.RuleNames, typez: map[string]reflect.Value{}}
 	state.push(rv)
 	antlr.ParseTreeWalkerDefault.Walk(state, p.Modl())
 	return state.err
@@ -36,8 +37,9 @@ func Unmarshal(data []byte, v interface{}, files fs.FS) error {
 
 type unmarshaler struct {
 	*parser.BaseMODLParserListener
-	Names []string
+	Names []string // DEBUG ONLY (REMOVE ON RELEASE PLZ!!!)
 	stack []reflect.Value
+	typez map[string]reflect.Value // for ref resolver
 	err   error
 }
 
@@ -47,6 +49,7 @@ func (u *unmarshaler) peek() reflect.Value {
 	}
 	return u.stack[len(u.stack)-1]
 }
+
 func (u *unmarshaler) push(v reflect.Value) { u.stack = append(u.stack, v) }
 func (u *unmarshaler) pop() reflect.Value {
 	if len(u.stack) < 1 {
@@ -58,11 +61,15 @@ func (u *unmarshaler) pop() reflect.Value {
 	return result
 }
 func (u *unmarshaler) debug() {
-	println("Stack Start ............ ")
+	fmt.Println("Stack Start ............ ") // use fmt so I don't have to keep swapping imports :cry:
 	for i, item := range u.stack {
 		println("Stack Item(" + strconv.Itoa(i) + "): " + item.String())
 	}
-	println("Stack End -------------- ")
+	println("Typez Start -------------- ")
+	for key, value := range u.typez {
+		println("Type ("+key+"): " + value.String())
+	}
+	println("DEBUG END ============== ")
 }
 func debug(list []reflect.Value) {
 	println("Debugging List " + strconv.Itoa(len(list)))
@@ -247,11 +254,16 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		node = ctx.QUOTED()
 	}
 	key := node.GetText()
-	if len(key) > 0 && (key[0] == '*' || key[0] == '_') {
-		println("TODO: INSTRUCTION or UNDERSCORE, ignoring (for now): " + key)
+	if len(key) > 0 && (key[0] == '*' || key[0] == '?') {
+		println("TODO: INSTRUCTION or QUESTION-MARK, ignoring (for now): " + key)
 		return
 	}
-	key = decode(key)
+	key = u.decode(key).String()
+	if len(key) > 0 && key[0] == '_' {
+		u.typez[key[1:]] = value
+		return // private keys are hidden!!!
+	}
+	u.typez[key] = value
 	switch v.Kind() {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
@@ -270,10 +282,11 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 		}
 		u.push(reflect.ValueOf(f))
 	case parser.MODLParserSTRING:
-		u.push(reflect.ValueOf(decode(ctx.STRING().GetText())))
+		text := ctx.STRING().GetText()
+		u.push(u.decode(text))
 	case parser.MODLParserQUOTED:
 		text := ctx.QUOTED().GetText()
-		u.push(reflect.ValueOf(decode(text)))
+		u.push(u.decode(text))
 	case parser.MODLParserTRUE:
 		u.push(reflect.ValueOf(true))
 	case parser.MODLParserFALSE:
@@ -355,17 +368,35 @@ func indirect(v reflect.Value, decodingNull bool) reflect.Value {
 	return v
 }
 
-func decode(in string) string {
+func (u *unmarshaler) decode(in string) reflect.Value {
 	if strings.HasPrefix(in, "`") && strings.HasSuffix(in, "`") {
 		in = in[1 : len(in)-1]
 	} else if strings.HasPrefix(in, "\"") && strings.HasSuffix(in, "\"") {
 		in = in[1 : len(in)-1]
 	}
+
+	// noop short circuit
+	if len(in) == 0 { // noop
+		return reflect.ValueOf(in)
+	}
+
+	// quick pre-lookup if the full thing is a reference
+	if in[0] == '%' && strings.IndexByte(in, ' ') == -1 { // the whole "might" be a reference
+		key := in[1:]
+		if key[0] == '_' { // remove optional reference identifier
+			key = key[1:]
+		}
+		if v, ok := u.typez[key]; ok {
+			return v
+		}
+	}
+
+	// Fix the string (resolve references as necessary)
 	runes := []rune(in)
 	j := 0
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
-		if (r == '\\' || r == '~') && runes[i+1] == 'u' {
+		if (r == '\\' || r == '~') && runes[i+1] == 'u' { // \u or ~u => unicode character
 			if rx, off := getu4(runes[i:]); rx != -1 {
 				runes[j] = rx
 				i += off
@@ -373,14 +404,24 @@ func decode(in string) string {
 				continue
 			}
 		}
-		if r == '\\' || r == '~' {
+		if r == '\\' || r == '~' { // \<char> or ~<char> => <char>
 			r = runes[i+1]
-			i++
+			i++ // skip the possible next call on %
+		} else if r == '%' {
+			word, stop := u.resolveRef(string(runes[i+1:]))
+			if stop != 0 {
+				tail := string(runes[i+stop+1:])
+				str := string(runes[:j]) + word + tail
+				j += len(word)
+				i = j - 1 // increments in loop
+				runes = []rune(str)
+				continue
+			}
 		}
 		runes[j] = r
 		j++
 	}
-	return string(runes[:j])
+	return reflect.ValueOf(string(runes[:j]))
 }
 
 // getu4 decodes \uXXXX from the beginning of s, returning the hex value,
@@ -414,4 +455,29 @@ func getu4(s []rune) (rune, int) {
 		r = q
 	}
 	return r, len(s)
+}
+
+func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
+	stop := strings.IndexAny(str, " %")
+	if stop == -1 {
+		stop = len(str)
+	} else {
+		stop++ // want to include the stop character in our slicing measurement
+	}
+	word := str[:stop]
+	if len(word) == 0 {
+		return str, 0
+	}
+	if word[len(word)-1] == '%' {
+		word = word[:len(word)-1]
+	}
+	kind, ok := u.typez[word]
+	if !ok {
+		return str, 0
+	}
+	rep, ok = kind.Interface().(string)
+	if !ok {
+		return str, 0
+	}
+	return rep, stop
 }
