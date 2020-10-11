@@ -393,7 +393,7 @@ func (u *unmarshaler) decode(in string) reflect.Value {
 	}
 
 	// quick pre-lookup if the full thing is a reference
-	if in[0] == '%' && strings.IndexByte(in, ' ') == -1 { // the whole "might" be a reference
+	if in[0] == '%' && strings.IndexAny(in[1:], " %") == -1 { // the whole "might" be a reference
 		key := in[1:]
 		if key[0] == '_' { // remove optional reference identifier
 			key = key[1:]
@@ -503,16 +503,53 @@ func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
 	return rep, stop
 }
 
-func (u *unmarshaler) lookup(key string) (v reflect.Value) {
+func (u *unmarshaler) lookup(key string) reflect.Value {
+	stop := strings.IndexByte(key, '.')
+	if stop == -1 {
+		stop = len(key)
+	}
+	v := u.typez[key[:stop]]
+	if stop == len(key) || !v.IsValid() {
+		return v
+	}
+	key = key[stop+1:]
+	if v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
 	for len(key) > 0 {
-		// fmt.Printf("Looking up: %v\n", key)
+		// fmt.Printf("Looking up: %v %v\n", key, v.String())
+
 		stop := strings.IndexByte(key, '.')
 		if stop == -1 {
 			stop = len(key)
 		}
-		v = u.typez[key[:stop]]
-		if stop == len(key) || !v.IsValid() {
+		l := key[:stop]
+
+		// Based on the type of `v` do either a map or slice lookup
+		var t reflect.Value
+		if v.Kind() == reflect.Map {
+			t = v.MapIndex(reflect.ValueOf(l))
+		} else if v.Kind() == reflect.Slice {
+			n, err := strconv.Atoi(l)
+			if err != nil {
+				panic(err) // TODO: report error cleanly
+				return reflect.Value{}
+			}
+			t = v.Index(n)
+		}
+
+		// Check Validity of result
+		if !t.IsValid() {
 			return v
+		}
+		if stop == len(key) {
+			return t
+		}
+
+		// Since things are map[string]interface{}, dereference the interface
+		v = t
+		if v.Kind() == reflect.Interface {
+			v = v.Elem()
 		}
 		key = key[stop+1:]
 	}

@@ -25,6 +25,7 @@ var allow = map[string]bool{
 	"042": true, // noop class
 	"085": true, // noop class
 	"129": true, // additional-label: conditional
+	"130": true, // additional-label: conditional
 	"178": true, // noop load
 	"179": true, // noop load
 	"270": true, // noop load
@@ -36,20 +37,13 @@ var allow = map[string]bool{
 // Tests with supported features that don't quite work right :cry:
 // WHERE question == "object index" (5.2) of modl spec
 var skip = map[string]bool{
-	"040": true, // WIP: obj-ref - _test=[[a;b]];letters2=%test.0.0 - dots, array
-	"049": true, // WIP: obj-ref - ?=[a;b;c;d]:[1;2;3;4;5];test=%1.0 - question, dots
 	"050": true, // WIP: obj-ref - _test=123;object(print_test = %test.test) - dots, stop, early
 	"098": true, // WIP: obj-ref - _C=gb;_COUNTRIES(gb=ASDF);name=%COUNTRIES.%C - dots, double lookup
-	"124": true, // WIP: obj-ref - _test[a;b;c];alex=%test.0 - dots, array
 	"161": true, // WIP: obj-ref - flat-return-null?
 	"167": true, // missing_label => object_ref/conditional
-	"217": true, // WIP: obj-ref - dots, array
 	"218": true, // WIP: obj-ref - dots
-	"221": true, // WIP: obj-ref - dots, array, object
 	"222": true, // WIP: obj-ref - dots, array, object
-	"236": true, // missing_label => object_ref
 	"237": true, // WIP: obj-ref - dots
-	"247": true, // WIP: obj-ref - dots, array
 	"273": true, // WIP: obj-ref - string functions
 	"285": true, // WIP: obj-ref - string functions
 	"299": true, // WIP: obj-ref - string functions
