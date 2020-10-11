@@ -398,7 +398,7 @@ func (u *unmarshaler) decode(in string) reflect.Value {
 		if key[0] == '_' { // remove optional reference identifier
 			key = key[1:]
 		}
-		if v, ok := u.typez[key]; ok {
+		if v := u.lookup(key); v.IsValid() {
 			return v
 		}
 	}
@@ -501,4 +501,20 @@ func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
 		return str, 0
 	}
 	return rep, stop
+}
+
+func (u *unmarshaler) lookup(key string) (v reflect.Value) {
+	for len(key) > 0 {
+		// fmt.Printf("Looking up: %v\n", key)
+		stop := strings.IndexByte(key, '.')
+		if stop == -1 {
+			stop = len(key)
+		}
+		v = u.typez[key[:stop]]
+		if stop == len(key) || !v.IsValid() {
+			return v
+		}
+		key = key[stop+1:]
+	}
+	return v
 }

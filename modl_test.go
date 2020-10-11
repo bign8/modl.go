@@ -24,6 +24,7 @@ var allow = map[string]bool{
 	"003": true, // noop load
 	"042": true, // noop class
 	"085": true, // noop class
+	"129": true, // additional-label: conditional
 	"178": true, // noop load
 	"179": true, // noop load
 	"270": true, // noop load
@@ -38,12 +39,7 @@ var skip = map[string]bool{
 	"040": true, // WIP: obj-ref - _test=[[a;b]];letters2=%test.0.0 - dots, array
 	"049": true, // WIP: obj-ref - ?=[a;b;c;d]:[1;2;3;4;5];test=%1.0 - question, dots
 	"050": true, // WIP: obj-ref - _test=123;object(print_test = %test.test) - dots, stop, early
-	"058": true, // WIP: obj-ref - _test=(a=b=c=d=f);x=%test.a.b.c.d - dots
-	"059": true, // WIP: obj-ref - a(b(c(d(e(f=1)))));testing=%a.b.c.d.e.f - dots
-	"060": true, // WIP: obj-ref - _test=(a=b=c=d=f);testing=%test.a.b.c.d - dots
-	"096": true, // WIP: obj-ref - _person(name(first=John;last=Smith));say=%person.name.first - dots
 	"098": true, // WIP: obj-ref - _C=gb;_COUNTRIES(gb=ASDF);name=%COUNTRIES.%C - dots, double lookup
-	"100": true, // WIP: obj-ref - _person(name(first="John"));a=%person.name.first - dots
 	"124": true, // WIP: obj-ref - _test[a;b;c];alex=%test.0 - dots, array
 	"161": true, // WIP: obj-ref - flat-return-null?
 	"167": true, // missing_label => object_ref/conditional
@@ -51,7 +47,6 @@ var skip = map[string]bool{
 	"218": true, // WIP: obj-ref - dots
 	"221": true, // WIP: obj-ref - dots, array, object
 	"222": true, // WIP: obj-ref - dots, array, object
-	"223": true, // WIP: obj-ref - dots, object
 	"236": true, // missing_label => object_ref
 	"237": true, // WIP: obj-ref - dots
 	"247": true, // WIP: obj-ref - dots, array
