@@ -255,7 +255,7 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	}
 	key := node.GetText()
 	if len(key) > 0 && key[0] == '*' {
-		println("TODO: INSTRUCTION, ignoring (for now): " + key)
+		// println("TODO: INSTRUCTION, ignoring (for now): " + key)
 		return
 	}
 	key = u.decode(key).String()
@@ -398,7 +398,7 @@ func (u *unmarshaler) decode(in string) reflect.Value {
 		if key[0] == '_' { // remove optional reference identifier
 			key = key[1:]
 		}
-		if v := u.lookup(key); v.IsValid() {
+		if v, l := u.lookup(key); v.IsValid() && l == len(key) {
 			return v
 		}
 	}
@@ -420,7 +420,7 @@ func (u *unmarshaler) decode(in string) reflect.Value {
 			r = runes[i+1]
 			i++ // skip the possible next call on %
 		} else if r == '%' {
-			word, stop := u.resolveRef(string(runes[i+1:]))
+			word, stop := u.lookupStr(string(runes[i+1:]))
 			if stop != 0 {
 				tail := string(runes[i+stop+1:])
 				str := string(runes[:j]) + word + tail
@@ -469,81 +469,70 @@ func getu4(s []rune) (rune, int) {
 	return r, len(s)
 }
 
-func (u *unmarshaler) resolveRef(str string) (rep string, key_len int) {
-	stop := strings.IndexAny(str, " %`/")
-	if stop == -1 {
-		stop = len(str)
-	} else if stop == 0 && str[stop] == '`' {
-		stop := strings.IndexByte(str[1:], '`')
-		if stop == -1 {
-			return str, 0 // end of word: %prev-resolve%`%`
-		}
-		word := str[1:stop+1]
-		// TODO: punycode?
-		return word, stop+2 // account for both graves
+func (u *unmarshaler) lookupStr(str string) (rep string, length int) {
+	v, length := u.lookup(str)
+	if length == 0 {
+		return ``, length
 	}
-	word := str[:stop]
-	if len(word) == 0 {
-		return str, 0
+	switch v.Kind() {
+	case reflect.String:
+		return v.Interface().(string), length
+	case reflect.Float64:
+		return strconv.FormatFloat(v.Interface().(float64), 'G', -1, 64), length
+	default:
+		println("resolveRef: Unknown value type: " + v.String())
+		return ``, 0
 	}
-	if stop < len(str) && str[stop] == '%' {
-		stop++ // include terminating %
-	}
-	kind, ok := u.typez[word]
-	if !ok {
-		return str, 0
-	}
-	rep, ok = kind.Interface().(string)
-	if !ok {
-		if num, ok := kind.Interface().(float64); ok {
-			return strconv.FormatFloat(num, 'G', -1, 64), stop
-		}
-		return str, 0
-	}
-	return rep, stop
 }
 
-func (u *unmarshaler) lookup(key string) reflect.Value {
-	stop := strings.IndexByte(key, '.')
-	if stop == -1 {
-		stop = len(key)
+func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
+	// Is it a graved embedded string?
+	if len(key) > 0 && key[0] == '`' {
+		stop := strings.IndexByte(key[1:], '`')
+		if stop == -1 {
+			return reflect.Value{}, 0 // end of word: %prev-resolve%`%`
+		}
+		word := key[1:stop+1]
+		// TODO: punycode?
+		return reflect.ValueOf(word), stop+2 // include both graves
 	}
-	v := u.typez[key[:stop]]
-	if stop == len(key) || !v.IsValid() {
-		return v
-	}
-	key = key[stop+1:]
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
-	for len(key) > 0 {
-		// fmt.Printf("Looking up: %v %v\n", key, v.String())
 
-		stop := strings.IndexByte(key, '.')
+	// convert type map lookup to reflect value, for easy recursing and looping (TODO: do this on unmarshaler?)
+	v := reflect.ValueOf(make(map[string]interface{}, len(u.typez)))
+	for key, value := range u.typez {
+		v.SetMapIndex(reflect.ValueOf(key), value)
+	}
+
+	// Loop over multiple `.` references/lookups
+	start := 0
+	for start < len(key) {
+		stop := strings.IndexAny(key[start:], " .%`/")
 		if stop == -1 {
 			stop = len(key)
+		} else {
+			stop += start
 		}
-		l := key[:stop]
+		word := key[start:stop]
 
 		// Based on the type of `v` do either a map or slice lookup
 		var t reflect.Value
-		if v.Kind() == reflect.Map {
-			t = v.MapIndex(reflect.ValueOf(l))
-		} else if v.Kind() == reflect.Slice {
-			n, err := strconv.Atoi(l)
+		switch v.Kind() {
+		case reflect.Map:
+			t = v.MapIndex(reflect.ValueOf(word))
+		case reflect.Slice:
+			n, err := strconv.Atoi(word)
 			if err != nil {
 				panic(err) // TODO: report error cleanly
-				return reflect.Value{}
+				return reflect.Value{}, 0
 			}
 			t = v.Index(n)
+		default:
+			return v, start-1 // shift back separator offset?
 		}
 
 		// Check Validity of result
 		if !t.IsValid() {
-			return v
-		}
-		if stop == len(key) {
-			return t
+			return v, start
 		}
 
 		// Since things are map[string]interface{}, dereference the interface
@@ -551,7 +540,21 @@ func (u *unmarshaler) lookup(key string) reflect.Value {
 		if v.Kind() == reflect.Interface {
 			v = v.Elem()
 		}
-		key = key[stop+1:]
+
+		// Have we encountered the end of an embedding?
+		if stop < len(key) && key[stop] == '%' {
+			return v, stop+1
+		}
+		// or hit a terminating marker of some kind?
+		if stop < len(key) && strings.IndexByte(" `/", key[stop]) != -1 {
+			return v, stop
+		}
+
+		// Are we at the end of the string?
+		if stop == len(key) {
+			return v, stop
+		}
+		start = stop+1
 	}
-	return v
+	return v, 0 // TODO: verify this
 }

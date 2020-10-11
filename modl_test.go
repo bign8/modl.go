@@ -37,19 +37,14 @@ var allow = map[string]bool{
 // Tests with supported features that don't quite work right :cry:
 // WHERE question == "object index" (5.2) of modl spec
 var skip = map[string]bool{
-	"050": true, // WIP: obj-ref - _test=123;object(print_test = %test.test) - dots, stop, early
 	"098": true, // WIP: obj-ref - _C=gb;_COUNTRIES(gb=ASDF);name=%COUNTRIES.%C - dots, double lookup
 	"161": true, // WIP: obj-ref - flat-return-null?
 	"167": true, // missing_label => object_ref/conditional
-	"218": true, // WIP: obj-ref - dots
-	"222": true, // WIP: obj-ref - dots, array, object
-	"237": true, // WIP: obj-ref - dots
 	"273": true, // WIP: obj-ref - string functions
 	"285": true, // WIP: obj-ref - string functions
 	"299": true, // WIP: obj-ref - string functions
 	"323": true, // double parsed escape sequence on unicode (emailing with MODL maintainers)
 	"329": true, // WIP: obj-ref - load, num-record, question
-	"330": true, // WIP: obj-ref - dots, array
 	"331": true, // WIP: obj-ref - load
 	"359": true, // WIP: refs - inline string punycode
 	"360": true, // WIP: refs - dots
