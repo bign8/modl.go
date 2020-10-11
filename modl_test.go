@@ -49,11 +49,7 @@ var skip = map[string]bool{
 	"359": true, // WIP: refs - inline string punycode
 	"360": true, // WIP: refs - dots
 	"364": true, // unlabled class
-	"365": true, // unlabled refs
-	"366": true, // unlabled refs
-	"367": true, // unlabled refs
-	"368": true, // unlabled refs
-	"369": true, // unlabled refs
+	"366": true, // unlabled refs, string functions
 	"370": true, // unlabled class
 }
 

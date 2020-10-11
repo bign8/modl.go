@@ -479,6 +479,16 @@ func (u *unmarshaler) lookupStr(str string) (rep string, length int) {
 		return v.Interface().(string), length
 	case reflect.Float64:
 		return strconv.FormatFloat(v.Interface().(float64), 'G', -1, 64), length
+	case reflect.Bool:
+		if v.Bool() {
+			return "true", length
+		}
+		return "false", length
+	case reflect.Ptr:
+		if v.IsNil() {
+			return "null", length
+		}
+		fallthrough
 	default:
 		println("resolveRef: Unknown value type: " + v.String())
 		return ``, 0
@@ -506,7 +516,7 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 	// Loop over multiple `.` references/lookups
 	start := 0
 	for start < len(key) {
-		stop := strings.IndexAny(key[start:], " .%`/")
+		stop := strings.IndexAny(key[start:], " .%`/,")
 		if stop == -1 {
 			stop = len(key)
 		} else {
@@ -546,7 +556,7 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 			return v, stop+1
 		}
 		// or hit a terminating marker of some kind?
-		if stop < len(key) && strings.IndexByte(" `/", key[stop]) != -1 {
+		if stop < len(key) && strings.IndexByte(" `/,", key[stop]) != -1 {
 			return v, stop
 		}
 
