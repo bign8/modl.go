@@ -254,15 +254,27 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		node = ctx.QUOTED()
 	}
 	key := node.GetText()
-	if len(key) > 0 && (key[0] == '*' || key[0] == '?') {
-		println("TODO: INSTRUCTION or QUESTION-MARK, ignoring (for now): " + key)
+	if len(key) > 0 && key[0] == '*' {
+		println("TODO: INSTRUCTION, ignoring (for now): " + key)
 		return
 	}
 	key = u.decode(key).String()
+
+	// private key, not included in overall output, but can be referenced
 	if len(key) > 0 && key[0] == '_' {
 		u.typez[key[1:]] = value
-		return // private keys are hidden!!!
+		return
 	}
+
+	// Object Index: set using the key '?'; values must be an array (referenced by position)
+	if len(key) > 0 && key[0] == '?' {
+		for i := value.Len()-1; i >= 0; i-- {
+			u.typez[strconv.Itoa(i)] = value.Index(i)
+		}
+		return
+	}
+
+	// Just set the key=value
 	u.typez[key] = value
 	switch v.Kind() {
 	case reflect.Map:
