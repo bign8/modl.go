@@ -37,7 +37,6 @@ var allow = map[string]bool{
 // Tests with supported features that don't quite work right :cry:
 // WHERE question == "object index" (5.2) of modl spec
 var skip = map[string]bool{
-	"098": true, // WIP: obj-ref - _C=gb;_COUNTRIES(gb=ASDF);name=%COUNTRIES.%C - dots, double lookup
 	"161": true, // WIP: obj-ref - flat-return-null?
 	"167": true, // missing_label => object_ref/conditional
 	"273": true, // WIP: obj-ref - string functions

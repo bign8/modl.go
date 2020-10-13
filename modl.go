@@ -549,6 +549,15 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 			word = key[start:stop] // just recurse through the type (arrays)
 		}
 
+		// Double lookup == recurse and pray it works
+		var hack int
+		if start > 0 && key[start-1:start+1] == ".%" {
+			z, n := u.lookup(key[start+1:])
+			word = key[:stop] + z.String()
+			hack = n + 1
+			v = v0
+		}
+
 		// Based on the type of `v` do either a map or slice lookup
 		var t reflect.Value
 		switch v.Kind() {
@@ -573,6 +582,11 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 		v = t
 		if v.Kind() == reflect.Interface {
 			v = v.Elem()
+		}
+
+		// Double lookups are not the cleanest thing in the world
+		if hack > 0 {
+			return v, stop + hack
 		}
 
 		// Have we encountered the end of an embedding?
