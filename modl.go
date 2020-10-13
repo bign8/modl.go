@@ -40,6 +40,7 @@ type unmarshaler struct {
 	Names []string // DEBUG ONLY (REMOVE ON RELEASE PLZ!!!)
 	stack []reflect.Value
 	typez map[string]reflect.Value // for ref resolver
+	ctx   []string
 	err   error
 }
 
@@ -67,7 +68,7 @@ func (u *unmarshaler) debug() {
 	}
 	println("Typez Start -------------- ")
 	for key, value := range u.typez {
-		println("Type ("+key+"): " + value.String())
+		println("Type (" + key + "): " + value.String())
 	}
 	println("DEBUG END ============== ")
 }
@@ -227,6 +228,21 @@ func (u *unmarshaler) ExitModl_value_item(ctx *parser.Modl_value_itemContext) {
 }
 
 func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
+
+	// parse the key and save (used below when resolving references)
+	node := ctx.STRING()
+	if node == nil {
+		node = ctx.QUOTED()
+	}
+	key := node.GetText()
+	if len(key) > 0 && key[0] != '*' {
+		key = u.decode(key).String()
+		if key[0] == '_' {
+			key = key[1:]
+		}
+		u.ctx = append(u.ctx, key)
+	}
+
 	// See if parent has a property that can be set, matching our key
 	v0 := u.peek()
 	if v0.IsValid() {
@@ -259,23 +275,24 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		return
 	}
 	key = u.decode(key).String()
+	u.ctx = u.ctx[:len(u.ctx)-1] // slice off my context (used by my children)
 
 	// private key, not included in overall output, but can be referenced
 	if len(key) > 0 && key[0] == '_' {
-		u.typez[key[1:]] = value
+		u.remember(key[1:], value)
 		return
 	}
 
 	// Object Index: set using the key '?'; values must be an array (referenced by position)
 	if len(key) > 0 && key[0] == '?' {
-		for i := value.Len()-1; i >= 0; i-- {
+		for i := value.Len() - 1; i >= 0; i-- {
 			u.typez[strconv.Itoa(i)] = value.Index(i)
 		}
 		return
 	}
 
 	// Just set the key=value
-	u.typez[key] = value
+	u.remember(key, value)
 	switch v.Kind() {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
@@ -283,6 +300,11 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		u.push(value) // put value back
 		println("ExitModl_pair: What is this: " + v.Kind().String())
 	}
+}
+
+func (u *unmarshaler) remember(key string, value reflect.Value) {
+	key = strings.Join(append(u.ctx, key), ".")
+	u.typez[key] = value
 }
 
 func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
@@ -502,13 +524,14 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 		if stop == -1 {
 			return reflect.Value{}, 0 // end of word: %prev-resolve%`%`
 		}
-		word := key[1:stop+1]
+		word := key[1 : stop+1]
 		// TODO: punycode?
-		return reflect.ValueOf(word), stop+2 // include both graves
+		return reflect.ValueOf(word), stop + 2 // include both graves
 	}
 
 	// convert type map lookup to reflect value, for easy recursing and looping (TODO: do this on unmarshaler?)
 	v := reflect.ValueOf(make(map[string]interface{}, len(u.typez)))
+	v0 := v
 	for key, value := range u.typez {
 		v.SetMapIndex(reflect.ValueOf(key), value)
 	}
@@ -522,7 +545,12 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 		} else {
 			stop += start
 		}
-		word := key[start:stop]
+		word := key[:stop]
+		if v0.MapIndex(reflect.ValueOf(word)).IsValid() {
+			v = v0 // do a full lookup on the parent plz (pairs/maps)
+		} else {
+			word = key[start:stop] // just recurse through the type (arrays)
+		}
 
 		// Based on the type of `v` do either a map or slice lookup
 		var t reflect.Value
@@ -537,7 +565,7 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 			}
 			t = v.Index(n)
 		default:
-			return v, start-1 // shift back separator offset?
+			return v, start - 1 // shift back separator offset?
 		}
 
 		// Check Validity of result
@@ -553,7 +581,7 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 
 		// Have we encountered the end of an embedding?
 		if stop < len(key) && key[stop] == '%' {
-			return v, stop+1
+			return v, stop + 1
 		}
 		// or hit a terminating marker of some kind?
 		if stop < len(key) && strings.IndexByte(" `/,", key[stop]) != -1 {
@@ -564,7 +592,7 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 		if stop == len(key) {
 			return v, stop
 		}
-		start = stop+1
+		start = stop + 1
 	}
 	return v, 0 // TODO: verify this
 }
