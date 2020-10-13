@@ -133,8 +133,7 @@ func (u *unmarshaler) EnterModl_array_item(ctx *parser.Modl_array_itemContext) {
 func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
 	v := u.pop()
 	if !v.IsValid() {
-		panic("ExitModl_array_item(0): tip should be valid")
-		return
+		panic("ExitModl_array_item(0): tip should be valid") // TODO: exit cleanly
 	}
 	t := u.pop()
 	if t.IsValid() {
@@ -186,8 +185,7 @@ func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
 func (u *unmarshaler) exitArray(cnt int, markers []int) {
 	ptr := len(u.stack) - cnt
 	if ptr < 1 {
-		panic("exitArray: invalid stack... gtfo")
-		return
+		panic("exitArray: invalid stack... gtfo") // TODO: exit cleanly
 	}
 	items := u.stack[ptr:]
 	arr := u.stack[ptr-1]
@@ -216,8 +214,7 @@ func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
 func (u *unmarshaler) ExitModl_value_item(ctx *parser.Modl_value_itemContext) {
 	v := u.pop()
 	if !v.IsValid() {
-		panic("ExitModl_value_item(0): tip should be valid")
-		return
+		panic("ExitModl_value_item(0): tip should be valid") // TODO: exit cleanly
 	}
 	t := u.pop()
 	if t.IsValid() {
@@ -561,7 +558,6 @@ func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
 			n, err := strconv.Atoi(word)
 			if err != nil {
 				panic(err) // TODO: report error cleanly
-				return reflect.Value{}, 0
 			}
 			t = v.Index(n)
 		default:
