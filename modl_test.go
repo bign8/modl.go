@@ -9,21 +9,9 @@ import (
 
 // base_tests.json that are currently failing
 var skip = map[string]bool{
-	"b007": true, // pair
-	"b008": true, // pair
-	"b026": true, // pair
-	"b028": true, // pair
-	"b029": true,
-	"b031": true,
-	"b032": true,
-	"b049": true,
-	"b087": true,
-	"b091": true,
-	"b188": true,
-	"b189": true,
-	"b201": true,
+	"b188": true, // escape
+	"b189": true, // escape
 	"b216": true, // null
-	"b219": true, // pair
 	"b226": true, // tilde escape
 	"b227": true, // tilde escape
 	"e058": true, // multiple map keys
@@ -74,7 +62,7 @@ func (test grammarTest) Test(t *testing.T) {
 	}
 }
 
-func TestGrammar(t *testing.T) {
+func TestGrammarBase(t *testing.T) {
 	jsonTests, err := ioutil.ReadFile("grammar/tests/base_tests.json")
 	if err != nil {
 		t.Skip("Cannot read base_tests.json (git submodule init): " + err.Error())

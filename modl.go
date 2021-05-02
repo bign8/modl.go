@@ -164,6 +164,8 @@ func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
 			return
 		}
 	}
+
+	// put an assignable PAIR onto the stack
 	m := map[string]interface{}{}
 	value := reflect.ValueOf(m)
 	u.push(value)
@@ -191,6 +193,28 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		u.push(value) // put value back
 		println("ExitModl_pair: What is this: " + v.Kind().String())
 	}
+}
+
+func (u *unmarshaler) EnterModl_value(ctx *parser.Modl_valueContext) {
+	// Add an invalid type, in case we enter another pair (don't re-use parent objects)
+	u.push(reflect.Value{})
+}
+
+func (u *unmarshaler) ExitModl_value(ctx *parser.Modl_valueContext) {
+	// the thing we just made as a value
+	v := u.pop()
+	if !v.IsValid() {
+		println("ExitModl_value(1): created value should be valid!")
+	}
+
+	// pop our invalid marker from the stack
+	t := u.pop()
+	if t.IsValid() {
+		println("ExitModl_value(2): marker should be invalid: " + t.String())
+		return
+	}
+
+	u.push(v)
 }
 
 func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
