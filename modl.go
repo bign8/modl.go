@@ -119,6 +119,40 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 	u.push(value)
 }
 
+func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
+	a := make([]interface{}, 0, len(ctx.AllModl_value()))
+	u.push(reflect.ValueOf(a))
+}
+
+func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
+	seps := ctx.AllSTRUCT_SEP()
+	markers := make([]int, len(seps))
+	for i, sep := range seps {
+		markers[i] = sep.GetSymbol().GetStart()
+	}
+	ptr := len(u.stack) - len(ctx.AllModl_value())
+	if ptr < 1 {
+		panic("exitArray: invalid stack... gtfo") // TODO: exit cleanly
+	}
+	items := u.stack[ptr:]
+	arr := u.stack[ptr-1]
+	if arr.Kind() != reflect.Slice {
+		println("exitArray: not a slice... skipping: " + arr.Kind().String())
+		return
+	}
+
+	// Inject NULLs for adjacent markers (array item separators)
+	for i := 1; i < len(markers); i++ {
+		if markers[i-1]+1 == markers[i] {
+			items = append(items, reflect.Value{})    // make space for null value
+			copy(items[i+1:], items[i:])              // shifting elements
+			items[i] = reflect.New(arr.Type().Elem()) // Null item (based on array type)
+		}
+	}
+	u.stack[ptr-1] = reflect.Append(arr, items...) // Append the elements into the slice
+	u.stack = u.stack[:ptr]                        // slice off the items from the stack
+}
+
 func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
 
 	// See if parent has a property that can be set, matching our key

@@ -8,96 +8,23 @@ import (
 	"testing"
 )
 
-// Known unsupported features; tests with this label are skipped
-var unsupported = map[string]bool{
-	// "DELETED": true,
-	// "load":          true,
-	// "conditional":   true,
-	// "class":         true,
-	// "method":        true,
-	// "string_method": true,
-	// "punycode":      true, // needs methods -> will use golang.org/x/net/idna::ToUnicode
-}
-
-// Tests on un-supported features, that pass due to noops
-var allow = map[string]bool{
-	// "003": true, // noop load
-	// "042": true, // noop class
-	// "085": true, // noop class
-	// "129": true, // additional-label: conditional
-	// "130": true, // additional-label: conditional
-	// "178": true, // noop load
-	// "179": true, // noop load
-	// "270": true, // noop load
-	// "271": true, // noop load
-	// "278": true, // noop method
-	// "333": true, // noop load
-}
-
-// Tests with supported features that don't quite work right :cry:
-// WHERE question == "object index" (5.2) of modl spec
+// base_tests.json that are currently failing
 var skip = map[string]bool{
-	"006": true, // pair
 	"007": true, // pair
 	"008": true, // pair
-	"013": true, // pair
-	"020": true, // pair
 	"026": true, // pair
 	"028": true, // pair
 	"029": true,
 	"031": true,
 	"032": true,
-	"042": true,
-	"044": true,
 	"049": true,
-	"056": true,
-	"057": true,
-	"058": true,
-	"059": true,
-	"060": true,
-	"063": true,
-	"064": true,
-	"070": true,
-	"084": true,
-	"086": true,
 	"087": true,
 	"091": true,
-	"095": true,
-	"096": true,
-	"103": true,
-	"105": true,
-	"106": true,
-	"110": true,
-	"111": true,
-	"112": true,
-	"115": true,
-	"120": true,
-	"123": true,
-	"124": true,
-	"127": true,
-	"129": true,
-	"130": true,
-	"131": true,
-	"136": true,
-	"139": true,
-	"149": true,
-	"150": true,
-	"157": true,
 	"188": true,
 	"189": true,
-	"191": true,
-	"197": true,
-	"198": true,
-	"199": true,
-	"200": true,
 	"201": true,
-	"204": true,
-	"205": true, // pair
-	"206": true, // pair
-	"207": true, // pair
 	"216": true, // null
 	"219": true, // pair
-	"225": true,
 	"226": true, // tilde escape
 	"227": true, // tilde escape
 }
@@ -118,18 +45,7 @@ func (test grammarTest) Name() string {
 }
 
 func (test grammarTest) Skip() bool {
-	if test.Expected == "DELETED" {
-		return true
-	}
-	if testing.Short() {
-		for _, feat := range test.Features {
-			if unsupported[feat] {
-				return !allow[test.ID]
-			}
-		}
-		return skip[test.ID]
-	}
-	return false
+	return testing.Short() && skip[test.ID]
 }
 
 func (test grammarTest) Test(t *testing.T) {
