@@ -99,8 +99,7 @@ func chk(tb testing.TB, x interface{}) {
 func TestBadInterfaceReflection(t *testing.T) {
 	// TODO: refactor tests so this isn't a problem
 	x := map[string]interface{}{}
-	var y interface{}
-	y = x
+	var y interface{} = x
 	chk(t, &y)
 	if err := json.Unmarshal([]byte("{\"a\": \"A\"}"), &y); err != nil {
 		t.Fatalf("Unmarshal: %v", err)

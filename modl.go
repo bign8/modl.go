@@ -65,12 +65,6 @@ func (u *unmarshaler) debug() {
 	}
 	println("DEBUG END ============== ")
 }
-func debug(list []reflect.Value) {
-	println("Debugging List " + strconv.Itoa(len(list)))
-	for i, l := range list {
-		println("\tItem(" + strconv.Itoa(i) + "): " + l.String())
-	}
-}
 
 // func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
 // 	println(u.Names[ctx.GetRuleIndex()] + "\tEnter\t" + ctx.GetText())
