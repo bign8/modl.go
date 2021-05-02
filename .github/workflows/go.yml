@@ -24,4 +24,4 @@ jobs:
         submodules: true
 
     - name: Test
-      run: go test -v -short .
+      run: go test -v -short ./...
