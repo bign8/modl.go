@@ -112,6 +112,15 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 }
 
 func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
+
+	// Fix for b216, the breaks b049, b050, b064 without the depth qualifier
+	if len(ctx.AllModl_pair()) == 0 && len(u.stack) == 1 {
+		var m map[string]interface{}
+		value := reflect.ValueOf(m)
+		u.push(value)
+		return
+	}
+
 	// println("Manually injecting map (TODO: respect provided fields)")
 	m := map[string]interface{}{}
 	value := reflect.ValueOf(m)
@@ -347,7 +356,7 @@ func decode(in string) reflect.Value {
 			case 't':
 				r = '\t'
 				i++ // skip forward
-			// Missing: b, f, r, u from encoding/json (future bug report?)
+				// Missing: b, f, r, u from encoding/json (future bug report?)
 			}
 		}
 		runes[j] = r

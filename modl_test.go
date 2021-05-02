@@ -9,8 +9,7 @@ import (
 
 // base_tests.json that are currently failing
 var skip = map[string]bool{
-	"b216": true, // null
-	"e058": true, // multiple map keys
+	"e058": true, // orphan pairs
 }
 
 type grammarTest struct {
