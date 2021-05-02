@@ -9,11 +9,7 @@ import (
 
 // base_tests.json that are currently failing
 var skip = map[string]bool{
-	"b188": true, // escape
-	"b189": true, // escape
 	"b216": true, // null
-	"b226": true, // tilde escape
-	"b227": true, // tilde escape
 	"e058": true, // multiple map keys
 }
 

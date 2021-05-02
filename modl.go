@@ -324,22 +324,31 @@ func decode(in string) reflect.Value {
 		return reflect.ValueOf(in)
 	}
 
-	// Fix the string (resolve references as necessary)
+	// Decode string (inspired by unquoteBytes in encoding/json/decode.go)
 	runes := []rune(in)
 	j := 0
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
-		if (r == '\\' || r == '~') && runes[i+1] == 'u' { // \u or ~u => unicode character
-			if rx, off := getu4(runes[i:]); rx != -1 {
-				runes[j] = rx
-				i += off
-				j++
-				continue
+		if (r == '\\' || r == '~') && i < len(runes)-1 {
+			switch runes[i+1] {
+			case 'u':
+				if rx, off := getu4(runes[i:]); rx != -1 {
+					runes[j] = rx
+					i += off
+					j++
+					continue
+				}
+			case '\\', '~':
+				r = runes[i+1]
+				i++ // skip forward
+			case 'n':
+				r = '\n'
+				i++ // skip forward
+			case 't':
+				r = '\t'
+				i++ // skip forward
+			// Missing: b, f, r, u from encoding/json (future bug report?)
 			}
-		}
-		if r == '\\' || r == '~' { // \<char> or ~<char> => <char>
-			r = runes[i+1]
-			i++ // skip the possible next call on %
 		}
 		runes[j] = r
 		j++
