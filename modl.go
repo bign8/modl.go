@@ -39,7 +39,6 @@ type unmarshaler struct {
 	*parser.BaseMODLParserListener
 	Names []string // DEBUG ONLY (REMOVE ON RELEASE PLZ!!!)
 	stack []reflect.Value
-	ctx   []string
 	err   error
 }
 
@@ -122,18 +121,6 @@ func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
 
 func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
 
-	// parse the key and save (used below when resolving references)
-	node := ctx.STRING()
-	if node == nil {
-		node = ctx.QUOTED()
-	}
-	key := node.GetText()
-	key = u.decode(key).String()
-	if key[0] == '_' {
-		key = key[1:]
-	}
-	u.ctx = append(u.ctx, key)
-
 	// See if parent has a property that can be set, matching our key
 	v0 := u.peek()
 	if v0.IsValid() {
@@ -161,8 +148,7 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		node = ctx.QUOTED()
 	}
 	key := node.GetText()
-	key = u.decode(key).String()
-	u.ctx = u.ctx[:len(u.ctx)-1] // slice off my context (used by my children)
+	key = decode(key).String()
 
 	// Just set the key=value
 	switch v.Kind() {
@@ -184,10 +170,10 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 		u.push(reflect.ValueOf(f))
 	case parser.MODLParserSTRING:
 		text := ctx.STRING().GetText()
-		u.push(u.decode(text))
+		u.push(decode(text))
 	case parser.MODLParserQUOTED:
 		text := ctx.QUOTED().GetText()
-		u.push(u.decode(text))
+		u.push(decode(text))
 	case parser.MODLParserTRUE:
 		u.push(reflect.ValueOf(true))
 	case parser.MODLParserFALSE:
@@ -269,7 +255,7 @@ func indirect(v reflect.Value, decodingNull bool) reflect.Value {
 	return v
 }
 
-func (u *unmarshaler) decode(in string) reflect.Value {
+func decode(in string) reflect.Value {
 	if strings.HasPrefix(in, "`") && strings.HasSuffix(in, "`") {
 		in = in[1 : len(in)-1]
 	} else if strings.HasPrefix(in, "\"") && strings.HasSuffix(in, "\"") {
