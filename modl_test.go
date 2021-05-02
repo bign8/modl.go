@@ -7,10 +7,8 @@ import (
 	"testing"
 )
 
-// base_tests.json that are currently failing
-var skip = map[string]bool{
-	"e058": true, // orphan pairs
-}
+// Ignore problematic tests (useful for changing featuresets)
+var skip = map[string]bool{}
 
 type grammarTest struct {
 	ID       string   `json:"id"`

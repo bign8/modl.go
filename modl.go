@@ -98,12 +98,20 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 		}
 	}
 
-	// Iff we have more than 2 items (pointer and structure), we must have generated an array
-	if len(u.stack) != 2 {
-		arr := reflect.ValueOf(make([]interface{}, 0, len(u.stack)-1))
-		arr = reflect.Append(arr, u.stack[1:]...)
-		u.stack[0].Elem().Set(arr)
-		return
+	// Iff we have more than 2 items (pointer and structure), we must have "orphan pairs"
+	// pairs outside of a map at the top level are considered pairs in the same map
+	if len(u.stack) > 2 {
+		// Merge subsequent orphan pairs, onto first orphan
+		base := u.stack[1]
+		for _, orphan := range u.stack[2:] {
+			if orphan.Kind() != reflect.Map {
+				panic("parent orphan that wasn't a map!")
+			}
+			key := orphan.MapKeys()[0] // pairs should only have one key
+			value := orphan.MapIndex(key)
+			base.SetMapIndex(key, value)
+		}
+		u.stack = u.stack[:2] // slice stack back down to size
 	}
 
 	// Otherwise, we have 2 items, pop the "value" and assign to "ptr"
