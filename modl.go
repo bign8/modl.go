@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-	"github.com/bign8/modl.go/internal/fs"
 	"github.com/bign8/modl.go/internal/parser"
 )
 
@@ -20,7 +19,7 @@ import (
 //go:generate java -jar ./antlr-4.8-complete.jar -Dlanguage=Go -Xexact-output-dir -o internal/parser grammar/antlr4/MODLParser.g4
 
 // Unmarshal parses the MODL-encoded data and stores the result in the value pointed to by v.
-func Unmarshal(data []byte, v interface{}, files fs.FS) error {
+func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("modl: Unmarshal(" + reflect.TypeOf(v).Kind().String() + ")")
