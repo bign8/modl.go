@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-	"github.com/bign8/modl.go/internal/fs"
 	"github.com/bign8/modl.go/internal/parser"
 )
 
@@ -20,7 +19,7 @@ import (
 //go:generate java -jar ./antlr-4.8-complete.jar -Dlanguage=Go -Xexact-output-dir -o internal/parser grammar/antlr4/MODLParser.g4
 
 // Unmarshal parses the MODL-encoded data and stores the result in the value pointed to by v.
-func Unmarshal(data []byte, v interface{}, files fs.FS) error {
+func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("modl: Unmarshal(" + reflect.TypeOf(v).Kind().String() + ")")
@@ -29,7 +28,7 @@ func Unmarshal(data []byte, v interface{}, files fs.FS) error {
 	lexer := parser.NewMODLLexer(is)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	p := parser.NewMODLParser(stream)
-	state := &unmarshaler{Names: p.RuleNames, typez: map[string]reflect.Value{}}
+	state := &unmarshaler{Names: p.RuleNames}
 	state.push(rv)
 	antlr.ParseTreeWalkerDefault.Walk(state, p.Modl())
 	return state.err
@@ -39,8 +38,6 @@ type unmarshaler struct {
 	*parser.BaseMODLParserListener
 	Names []string // DEBUG ONLY (REMOVE ON RELEASE PLZ!!!)
 	stack []reflect.Value
-	typez map[string]reflect.Value // for ref resolver
-	ctx   []string
 	err   error
 }
 
@@ -66,17 +63,7 @@ func (u *unmarshaler) debug() {
 	for i, item := range u.stack {
 		println("Stack Item(" + strconv.Itoa(i) + "): " + item.String())
 	}
-	println("Typez Start -------------- ")
-	for key, value := range u.typez {
-		println("Type (" + key + "): " + value.String())
-	}
 	println("DEBUG END ============== ")
-}
-func debug(list []reflect.Value) {
-	println("Debugging List " + strconv.Itoa(len(list)))
-	for i, l := range list {
-		println("\tItem(" + strconv.Itoa(i) + "): " + l.String())
-	}
 }
 
 // func (u *unmarshaler) EnterEveryRule(ctx antlr.ParserRuleContext) {
@@ -105,12 +92,20 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 		}
 	}
 
-	// Iff we have more than 2 items (pointer and structure), we must have generated an array
-	if len(u.stack) != 2 {
-		arr := reflect.ValueOf(make([]interface{}, 0, len(u.stack)-1))
-		arr = reflect.Append(arr, u.stack[1:]...)
-		u.stack[0].Elem().Set(arr)
-		return
+	// Iff we have more than 2 items (pointer and structure), we must have "orphan pairs"
+	// pairs outside of a map at the top level are considered pairs in the same map
+	if len(u.stack) > 2 {
+		// Merge subsequent orphan pairs, onto first orphan
+		base := u.stack[1]
+		for _, orphan := range u.stack[2:] {
+			if orphan.Kind() != reflect.Map {
+				panic("parent orphan that wasn't a map!")
+			}
+			key := orphan.MapKeys()[0] // pairs should only have one key
+			value := orphan.MapIndex(key)
+			base.SetMapIndex(key, value)
+		}
+		u.stack = u.stack[:2] // slice stack back down to size
 	}
 
 	// Otherwise, we have 2 items, pop the "value" and assign to "ptr"
@@ -119,71 +114,33 @@ func (u *unmarshaler) ExitModl(ctx *parser.ModlContext) {
 }
 
 func (u *unmarshaler) EnterModl_map(ctx *parser.Modl_mapContext) {
+
+	// Fix for b216, the breaks b049, b050, b064 without the depth qualifier
+	if len(ctx.AllModl_pair()) == 0 && len(u.stack) == 1 {
+		var m map[string]interface{}
+		value := reflect.ValueOf(m)
+		u.push(value)
+		return
+	}
+
 	// println("Manually injecting map (TODO: respect provided fields)")
 	m := map[string]interface{}{}
 	value := reflect.ValueOf(m)
 	u.push(value)
 }
 
-func (u *unmarshaler) EnterModl_array_item(ctx *parser.Modl_array_itemContext) {
-	// Add an invalid type, in case we enter another array (don't re-use parent objects)
-	u.push(reflect.Value{})
-}
-
-func (u *unmarshaler) ExitModl_array_item(ctx *parser.Modl_array_itemContext) {
-	v := u.pop()
-	if !v.IsValid() {
-		panic("ExitModl_array_item(0): tip should be valid") // TODO: exit cleanly
-	}
-	t := u.pop()
-	if t.IsValid() {
-		println("ExitModl_array_item(1): marker should be invalid: " + t.String())
-		return
-	}
-	u.push(v) // putting valid value back on!
-}
-
 func (u *unmarshaler) EnterModl_array(ctx *parser.Modl_arrayContext) {
-	// A modl_array can be a mix of either modl_array_item's or modl_nb_array's
-	// ( ( modl_array_item | modl_nb_array ) (STRUCT_SEP+ ( modl_array_item | modl_nb_array ) STRUCT_SEP* )* )?
-	u.enterArray(len(ctx.AllModl_array_item()) + len(ctx.AllModl_nb_array()))
-}
-
-func (u *unmarshaler) EnterModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
-	// modl_nb_arrays can ONLY be modl_array_item's
-	// ( modl_array_item COLON+ )+ ( modl_array_item )* COLON?
-	u.enterArray(len(ctx.AllModl_array_item()))
-}
-
-func (u *unmarshaler) enterArray(cnt int) {
-	a := make([]interface{}, 0, cnt)
+	a := make([]interface{}, 0, len(ctx.AllModl_value()))
 	u.push(reflect.ValueOf(a))
 }
 
 func (u *unmarshaler) ExitModl_array(ctx *parser.Modl_arrayContext) {
-	// A modl_array can be a mix of either modl_array_item's or modl_nb_array's
-	// ( ( modl_array_item | modl_nb_array ) (STRUCT_SEP+ ( modl_array_item | modl_nb_array ) STRUCT_SEP* )* )?
 	seps := ctx.AllSTRUCT_SEP()
 	markers := make([]int, len(seps))
 	for i, sep := range seps {
 		markers[i] = sep.GetSymbol().GetStart()
 	}
-	u.exitArray(len(ctx.AllModl_array_item())+len(ctx.AllModl_nb_array()), markers)
-}
-
-func (u *unmarshaler) ExitModl_nb_array(ctx *parser.Modl_nb_arrayContext) {
-	// modl_nb_arrays can ONLY be modl_array_item's
-	// ( modl_array_item COLON+ )+ ( modl_array_item )* COLON?
-	colons := ctx.AllCOLON()
-	markers := make([]int, len(colons))
-	for i, colon := range colons {
-		markers[i] = colon.GetSymbol().GetStart()
-	}
-	u.exitArray(len(ctx.AllModl_array_item()), markers)
-}
-
-func (u *unmarshaler) exitArray(cnt int, markers []int) {
-	ptr := len(u.stack) - cnt
+	ptr := len(u.stack) - len(ctx.AllModl_value())
 	if ptr < 1 {
 		panic("exitArray: invalid stack... gtfo") // TODO: exit cleanly
 	}
@@ -206,39 +163,7 @@ func (u *unmarshaler) exitArray(cnt int, markers []int) {
 	u.stack = u.stack[:ptr]                        // slice off the items from the stack
 }
 
-func (u *unmarshaler) EnterModl_value_item(ctx *parser.Modl_value_itemContext) {
-	// Add an invalid type, in case we enter another pair (don't re-use parent objects)
-	u.push(reflect.Value{})
-}
-
-func (u *unmarshaler) ExitModl_value_item(ctx *parser.Modl_value_itemContext) {
-	v := u.pop()
-	if !v.IsValid() {
-		panic("ExitModl_value_item(0): tip should be valid") // TODO: exit cleanly
-	}
-	t := u.pop()
-	if t.IsValid() {
-		println("ExitModl_value_item(1): marker should be invalid: " + t.String())
-		return
-	}
-	u.push(v) // putting valid value back on!
-}
-
 func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
-
-	// parse the key and save (used below when resolving references)
-	node := ctx.STRING()
-	if node == nil {
-		node = ctx.QUOTED()
-	}
-	key := node.GetText()
-	if len(key) > 0 && key[0] != '*' {
-		key = u.decode(key).String()
-		if key[0] == '_' {
-			key = key[1:]
-		}
-		u.ctx = append(u.ctx, key)
-	}
 
 	// See if parent has a property that can be set, matching our key
 	v0 := u.peek()
@@ -250,6 +175,8 @@ func (u *unmarshaler) EnterModl_pair(ctx *parser.Modl_pairContext) {
 			return
 		}
 	}
+
+	// put an assignable PAIR onto the stack
 	m := map[string]interface{}{}
 	value := reflect.ValueOf(m)
 	u.push(value)
@@ -267,29 +194,9 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 		node = ctx.QUOTED()
 	}
 	key := node.GetText()
-	if len(key) > 0 && key[0] == '*' {
-		// println("TODO: INSTRUCTION, ignoring (for now): " + key)
-		return
-	}
-	key = u.decode(key).String()
-	u.ctx = u.ctx[:len(u.ctx)-1] // slice off my context (used by my children)
-
-	// private key, not included in overall output, but can be referenced
-	if len(key) > 0 && key[0] == '_' {
-		u.remember(key[1:], value)
-		return
-	}
-
-	// Object Index: set using the key '?'; values must be an array (referenced by position)
-	if len(key) > 0 && key[0] == '?' {
-		for i := value.Len() - 1; i >= 0; i-- {
-			u.typez[strconv.Itoa(i)] = value.Index(i)
-		}
-		return
-	}
+	key = decode(key).String()
 
 	// Just set the key=value
-	u.remember(key, value)
 	switch v.Kind() {
 	case reflect.Map:
 		v.SetMapIndex(reflect.ValueOf(key), value)
@@ -299,9 +206,26 @@ func (u *unmarshaler) ExitModl_pair(ctx *parser.Modl_pairContext) {
 	}
 }
 
-func (u *unmarshaler) remember(key string, value reflect.Value) {
-	key = strings.Join(append(u.ctx, key), ".")
-	u.typez[key] = value
+func (u *unmarshaler) EnterModl_value(ctx *parser.Modl_valueContext) {
+	// Add an invalid type, in case we enter another pair (don't re-use parent objects)
+	u.push(reflect.Value{})
+}
+
+func (u *unmarshaler) ExitModl_value(ctx *parser.Modl_valueContext) {
+	// the thing we just made as a value
+	v := u.pop()
+	if !v.IsValid() {
+		println("ExitModl_value(1): created value should be valid!")
+	}
+
+	// pop our invalid marker from the stack
+	t := u.pop()
+	if t.IsValid() {
+		println("ExitModl_value(2): marker should be invalid: " + t.String())
+		return
+	}
+
+	u.push(v)
 }
 
 func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
@@ -314,10 +238,10 @@ func (u *unmarshaler) EnterModl_primitive(ctx *parser.Modl_primitiveContext) {
 		u.push(reflect.ValueOf(f))
 	case parser.MODLParserSTRING:
 		text := ctx.STRING().GetText()
-		u.push(u.decode(text))
+		u.push(decode(text))
 	case parser.MODLParserQUOTED:
 		text := ctx.QUOTED().GetText()
-		u.push(u.decode(text))
+		u.push(decode(text))
 	case parser.MODLParserTRUE:
 		u.push(reflect.ValueOf(true))
 	case parser.MODLParserFALSE:
@@ -399,7 +323,7 @@ func indirect(v reflect.Value, decodingNull bool) reflect.Value {
 	return v
 }
 
-func (u *unmarshaler) decode(in string) reflect.Value {
+func decode(in string) reflect.Value {
 	if strings.HasPrefix(in, "`") && strings.HasSuffix(in, "`") {
 		in = in[1 : len(in)-1]
 	} else if strings.HasPrefix(in, "\"") && strings.HasSuffix(in, "\"") {
@@ -411,42 +335,30 @@ func (u *unmarshaler) decode(in string) reflect.Value {
 		return reflect.ValueOf(in)
 	}
 
-	// quick pre-lookup if the full thing is a reference
-	if in[0] == '%' && strings.IndexAny(in[1:], " %") == -1 { // the whole "might" be a reference
-		key := in[1:]
-		if key[0] == '_' { // remove optional reference identifier
-			key = key[1:]
-		}
-		if v, l := u.lookup(key); v.IsValid() && l == len(key) {
-			return v
-		}
-	}
-
-	// Fix the string (resolve references as necessary)
+	// Decode string (inspired by unquoteBytes in encoding/json/decode.go)
 	runes := []rune(in)
 	j := 0
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
-		if (r == '\\' || r == '~') && runes[i+1] == 'u' { // \u or ~u => unicode character
-			if rx, off := getu4(runes[i:]); rx != -1 {
-				runes[j] = rx
-				i += off
-				j++
-				continue
-			}
-		}
-		if r == '\\' || r == '~' { // \<char> or ~<char> => <char>
-			r = runes[i+1]
-			i++ // skip the possible next call on %
-		} else if r == '%' {
-			word, stop := u.lookupStr(string(runes[i+1:]))
-			if stop != 0 {
-				tail := string(runes[i+stop+1:])
-				str := string(runes[:j]) + word + tail
-				j += len(word)
-				i = j - 1 // increments in loop
-				runes = []rune(str)
-				continue
+		if (r == '\\' || r == '~') && i < len(runes)-1 {
+			switch runes[i+1] {
+			case 'u':
+				if rx, off := getu4(runes[i:]); rx != -1 {
+					runes[j] = rx
+					i += off
+					j++
+					continue
+				}
+			case '\\', '~':
+				r = runes[i+1]
+				i++ // skip forward
+			case 'n':
+				r = '\n'
+				i++ // skip forward
+			case 't':
+				r = '\t'
+				i++ // skip forward
+				// Missing: b, f, r, u from encoding/json (future bug report?)
 			}
 		}
 		runes[j] = r
@@ -486,123 +398,4 @@ func getu4(s []rune) (rune, int) {
 		r = q
 	}
 	return r, len(s)
-}
-
-func (u *unmarshaler) lookupStr(str string) (rep string, length int) {
-	v, length := u.lookup(str)
-	if length == 0 {
-		return ``, length
-	}
-	switch v.Kind() {
-	case reflect.String:
-		return v.Interface().(string), length
-	case reflect.Float64:
-		return strconv.FormatFloat(v.Interface().(float64), 'G', -1, 64), length
-	case reflect.Bool:
-		if v.Bool() {
-			return "true", length
-		}
-		return "false", length
-	case reflect.Ptr:
-		if v.IsNil() {
-			return "null", length
-		}
-		fallthrough
-	default:
-		println("resolveRef: Unknown value type: " + v.String())
-		return ``, 0
-	}
-}
-
-func (u *unmarshaler) lookup(key string) (reflect.Value, int) {
-	// Is it a graved embedded string?
-	if len(key) > 0 && key[0] == '`' {
-		stop := strings.IndexByte(key[1:], '`')
-		if stop == -1 {
-			return reflect.Value{}, 0 // end of word: %prev-resolve%`%`
-		}
-		word := key[1 : stop+1]
-		// TODO: punycode?
-		return reflect.ValueOf(word), stop + 2 // include both graves
-	}
-
-	// convert type map lookup to reflect value, for easy recursing and looping (TODO: do this on unmarshaler?)
-	v := reflect.ValueOf(make(map[string]interface{}, len(u.typez)))
-	v0 := v
-	for key, value := range u.typez {
-		v.SetMapIndex(reflect.ValueOf(key), value)
-	}
-
-	// Loop over multiple `.` references/lookups
-	start := 0
-	for start < len(key) {
-		stop := strings.IndexAny(key[start:], " .%`/,")
-		if stop == -1 {
-			stop = len(key)
-		} else {
-			stop += start
-		}
-		word := key[:stop]
-		if v0.MapIndex(reflect.ValueOf(word)).IsValid() {
-			v = v0 // do a full lookup on the parent plz (pairs/maps)
-		} else {
-			word = key[start:stop] // just recurse through the type (arrays)
-		}
-
-		// Double lookup == recurse and pray it works
-		var hack int
-		if start > 0 && key[start-1:start+1] == ".%" {
-			z, n := u.lookup(key[start+1:])
-			word = key[:stop] + z.String()
-			hack = n + 1
-			v = v0
-		}
-
-		// Based on the type of `v` do either a map or slice lookup
-		var t reflect.Value
-		switch v.Kind() {
-		case reflect.Map:
-			t = v.MapIndex(reflect.ValueOf(word))
-		case reflect.Slice:
-			n, err := strconv.Atoi(word)
-			if err != nil {
-				panic(err) // TODO: report error cleanly
-			}
-			t = v.Index(n)
-		default:
-			return v, start - 1 // shift back separator offset?
-		}
-
-		// Check Validity of result
-		if !t.IsValid() {
-			return v, start
-		}
-
-		// Since things are map[string]interface{}, dereference the interface
-		v = t
-		if v.Kind() == reflect.Interface {
-			v = v.Elem()
-		}
-
-		// Double lookups are not the cleanest thing in the world
-		if hack > 0 {
-			return v, stop + hack
-		}
-
-		// Have we encountered the end of an embedding?
-		if stop < len(key) && key[stop] == '%' {
-			return v, stop + 1
-		}
-		// or hit a terminating marker of some kind?
-		if stop < len(key) && strings.IndexByte(" `/,", key[stop]) != -1 {
-			return v, stop
-		}
-
-		// Are we at the end of the string?
-		if stop == len(key) {
-			return v, stop
-		}
-		start = stop + 1
-	}
-	return v, 0 // TODO: verify this
 }
