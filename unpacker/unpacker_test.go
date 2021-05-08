@@ -121,6 +121,18 @@ var unpackerTests = []UnpackerTest{
 				{"name": "Jane Smith", "position": "CEO"},
 				{"name": "Dashna Anand", "position": "CMO"}
 			]}`,
+	}, {
+		Name: "noop",
+		Input: `{
+			"employees": [
+				{"name": "Jane Smith", "position": "CEO"},
+				{"name": "Dashna Anand", "position": "CMO"}
+			]}`,
+		Output: `{
+			"employees": [
+				{"name": "Jane Smith", "position": "CEO"},
+				{"name": "Dashna Anand", "position": "CMO"}
+			]}`,
 	},
 }
 
@@ -143,7 +155,7 @@ func (test *UnpackerTest) Run(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unable to parse transforms: %v", err)
 		}
-		u.AddTransform(trans...)
+		u.Transforms = trans
 	}
 	if test.Subs != `` {
 		subs := make(Substitution)
@@ -156,9 +168,23 @@ func (test *UnpackerTest) Run(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to unpack: %v", err)
 	}
-	if !bytes.Equal(output, []byte(test.Output)) {
-		t.Fatalf("Unexpected output:\n\tWant: %q\n\tGot:  %q", test.Output, string(output))
+	exp := test.out()
+	if !bytes.Equal(output, exp) {
+		t.Fatalf("Unexpected output:\n\tWant: %q\n\tGot:  %q", string(exp), string(output))
 	}
+}
+
+func (test UnpackerTest) out() []byte {
+	var obj interface{}
+	err := json.Unmarshal([]byte(test.Output), &obj)
+	if err != nil {
+		panic(err)
+	}
+	bits, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+	return bits
 }
 
 func TestUnpacker(t *testing.T) {
