@@ -107,10 +107,10 @@ func (state unpackState) object() map[string]interface{} {
 	for state.dec.More() {
 		k := state.value().(string)
 		v := state.value()
-
-		o[k] = v
-
-		// TODO: apply transforms to value
+		if k == "?" {
+			continue
+		}
+		state.transform(o, k, v)
 	}
 	state.delim('}')
 	return o
@@ -143,4 +143,20 @@ func (state unpackState) delim(delim json.Delim) {
 	if cl != delim {
 		panic(fmt.Sprintf("Expected %v; got %v", delim, cl))
 	}
+}
+
+func (state unpackState) transform(dest map[string]interface{}, key string, value interface{}) {
+	trans, ok := state.ctx.Transforms[key]
+	if !ok {
+		dest[key] = value
+		return
+	}
+	if trans.Key != "" {
+		// TODO: do last for multi-transforms?
+		dest[trans.Key] = value
+		return
+	}
+
+	// failsafe
+	dest[key] = value
 }

@@ -78,7 +78,6 @@ var unpackerTests = []UnpackerTest{
 		  }`,
 	}, {
 		Name:   "rewriteKey",
-		Skip:   true,
 		Input:  `{"f": 1}`,
 		Trans:  `{"f": {"rewriteKey": "foo"}}`,
 		Output: `{"foo": 1}`,
@@ -170,7 +169,7 @@ func (test *UnpackerTest) Run(t *testing.T) {
 	}
 	exp := test.out()
 	if !bytes.Equal(output, exp) {
-		t.Fatalf("Unexpected output:\n\tWant: %q\n\tGot:  %q", string(exp), string(output))
+		t.Fatalf("Unexpected output:\n\tWant: %s\n\tGot:  %s", string(exp), string(output))
 	}
 }
 
