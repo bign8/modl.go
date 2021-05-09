@@ -9,7 +9,6 @@ import (
 var unpackerTests = []UnpackerTest{
 	{
 		Name: "all",
-		Skip: true,
 		Input: `{
 			"?": ["https://www.widgetcompany.com", "team", "janesmith", "johnwilson", "dashnaanand"],
 			"o": [

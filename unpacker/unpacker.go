@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type Unpacker struct {
@@ -114,17 +116,40 @@ func (state unpackState) array() []interface{} {
 }
 
 func (state unpackState) string(in string, subz map[string]interface{}) interface{} {
-
-	// fast lookups
 	for i, v := range state.Idx {
-		if in == fmt.Sprintf("%%%d", i) {
+		key := "%" + strconv.Itoa(i)
+		if in == key {
 			return v
+		}
+		if s, ok := v.(string); ok {
+			if strings.HasSuffix(in, key) {
+				in = strings.TrimSuffix(in, key) + s
+			}
+			if strings.Contains(in, key+" ") {
+				in = strings.Replace(in, key+" ", s+" ", -1)
+			}
+			if strings.Contains(in, key+"%") {
+				in = strings.Replace(in, key+"%", s, -1)
+			}
 		}
 	}
-	for key, v := range subz {
-		if in == "%"+key {
+	for k, v := range subz {
+		key := "%" + k
+		if in == key {
 			return v
 		}
+		if s, ok := v.(string); ok {
+			if strings.HasSuffix(in, key) {
+				in = strings.TrimSuffix(in, key) + s
+			}
+			if strings.Contains(in, key+" ") {
+				in = strings.Replace(in, key+" ", s+" ", -1)
+			}
+			if strings.Contains(in, key+"%") {
+				in = strings.Replace(in, key+"%", s, -1)
+			}
+		}
+
 	}
 
 	// TODO: dot lookups
