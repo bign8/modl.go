@@ -83,31 +83,26 @@ var unpackerTests = []UnpackerTest{
 		Output: `{"foo": 1}`,
 	}, {
 		Name:   "rewriteValue",
-		Skip:   true,
-		Input:  `{"f": 1}`,
-		Trans:  `{"f": {"rewriteValue" : { "x" : "%self", "y" : 2 }}}`,
+		Input:  `{"foo": 1}`,
+		Trans:  `{"foo": {"rewriteValue" : { "x" : "%self", "y" : 2 }}}`,
 		Output: `{"foo": {"x": 1, "y": 2}}`,
 	}, {
 		Name:   "replacePair",
-		Skip:   true,
 		Input:  `{"f": 1}`,
 		Trans:  `{"f": {"replacePair": {"x": "%self", "y": 2, "z": 3}}}`,
 		Output: `{"x" : 1, "y" : 2, "z" : 3}`,
 	}, {
 		Name:   "subs",
-		Skip:   true,
 		Input:  `{"foo": "%var"}`,
 		Subs:   `{"var": 1}`,
 		Output: `{"foo": 1}`,
 	}, {
 		Name:   "assignKeys",
-		Skip:   true,
 		Input:  `{"phonetic": ["alpha", "bravo", "charlie"]}`,
 		Trans:  `{"phonetic": {"assignKeys": ["a", "b", "c"]}}`,
 		Output: `{"phonetic": {"a": "alpha", "b": "bravo", "c": "charlie"}}`,
 	}, {
 		Name:  "arrayItems",
-		Skip:  true,
 		Input: `{"employees": [["Jane Smith", "CEO"], ["Dashna Anand", "CMO"]]}`,
 		Trans: `{
 			"employees": {"arrayItems": "employee"},
@@ -146,7 +141,7 @@ type UnpackerTest struct {
 
 func (test *UnpackerTest) Run(t *testing.T) {
 	if testing.Short() && test.Skip {
-		t.Skip("")
+		t.Skip("manually disabled test")
 	}
 	u := &Unpacker{}
 	if test.Trans != `` {
