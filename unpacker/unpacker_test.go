@@ -1284,13 +1284,11 @@ var unpackerTests = []UnpackerTest{
 	// Source: https://www.unpacker.uk/specification#variable-index
 	{
 		Name:   "variable-index-1",
-		Skip:   true,
 		Input:  `{"?": [1], "a": "%0%"}`,
 		Output: `{"a": 1}`,
 	},
 	{
 		Name:   "variable-index-2",
-		Skip:   true,
 		Input:  `{"?": [["a", "b"], {"a": "alpha", "b": "bravo"}], "x": "%0%", "y": "%1%"}`,
 		Output: `{"x": ["a", "b"], "y": {"a": "alpha", "b": "bravo"}}`,
 	},
@@ -1304,7 +1302,6 @@ var unpackerTests = []UnpackerTest{
 	// Source: https://www.unpacker.uk/specification#substitution-object
 	{
 		Name:   "sub-1",
-		Skip:   true,
 		Input:  `{"this": "%a%", "that": "%b%"}`,
 		Subs:   `{"a": 1, "b": 2}`,
 		Output: `{"this": 1, "that": 2}`,
@@ -1322,32 +1319,15 @@ var unpackerTests = []UnpackerTest{
 		Name: "trans-1",
 		Input: `{
 			"t": 1,
-			"u": {
-			  "t": 2
-			},
-			"v": {
-			  "w": {
-				"t": 3
-			  }
-			}
+			"u": {"t": 2},
+			"v": {"w": {"t": 3}}
 		  }`,
-		Trans: `{
-			"t": {
-			  "rewriteKey": "testing"
-			}
-		  }`,
+		Trans: `{"t": {"rewriteKey": "testing"}}`,
 		Output: `{
 			"testing": 1,
-			"u": {
-			  "testing": 2
-			},
-			"v": {
-			  "w": {
-				"testing": 3
-			  }
-			}
-		  }
-		  `,
+			"u": {"testing": 2},
+			"v": {"w": {"testing": 3}}
+		  }`,
 	},
 	{
 		Name: "trans-2",
@@ -1393,20 +1373,13 @@ var unpackerTests = []UnpackerTest{
 		  }`,
 	},
 	{
-		Name: "trans-3",
-		Input: `{
-			"t": 1
-		  }`,
-		Trans: `{
-			"t": {
-			  "rewriteKey": "testing"
-			}
-		  }`,
+		Name:   "trans-3",
+		Input:  `{"t": 1}`,
+		Trans:  `{"t": {"rewriteKey": "testing"}}`,
 		Output: `{"testing": 1}`,
 	},
 	{
 		Name:  "trans-4",
-		Skip:  true,
 		Input: `{"t": "me"}`,
 		Trans: `{
 			"t": {

@@ -118,7 +118,7 @@ func (state unpackState) array() []interface{} {
 func (state unpackState) string(in string, subz map[string]interface{}) interface{} {
 	for i, v := range state.Idx {
 		key := "%" + strconv.Itoa(i)
-		if in == key {
+		if in == key || in == key+"%" {
 			return v
 		}
 		if s, ok := v.(string); ok {
@@ -135,7 +135,7 @@ func (state unpackState) string(in string, subz map[string]interface{}) interfac
 	}
 	for k, v := range subz {
 		key := "%" + k
-		if in == key {
+		if in == key || in == key+"%" {
 			return v
 		}
 		if s, ok := v.(string); ok {
@@ -193,7 +193,8 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	if len(trans.Assign) != 0 {
 		list, ok := value.([]interface{})
 		if !ok {
-			panic("assignKeys for " + key + " but didn't get a list")
+			fmt.Print("assignKeys for " + key + " but didn't get a list")
+			return
 		}
 		if len(list) != len(trans.Assign) {
 			panic(fmt.Sprintf("assignKeys for %s expected %d but got %d keys", key, len(trans.Assign), len(list)))
@@ -215,7 +216,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 				ctx[k] = v
 			}
 		}
-		fmt.Printf("Got replacer: %v\n", value)
+		// fmt.Printf("Got replacer: %v\n", value)
 		for k, v := range trans.Return {
 			// TODO: smarter string resolves
 			if s, ok := v.(string); ok {
@@ -228,11 +229,11 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 
 	// 3: rewriteValue
 	if trans.Rewrite != nil {
+		ctx := map[string]interface{}{
+			"self": value,
+		}
 		if m, ok := trans.Rewrite.(map[string]interface{}); ok {
 			n := map[string]interface{}{} // ensure we don't duplicate the object
-			ctx := map[string]interface{}{
-				"self": value,
-			}
 			for k, v := range m {
 				if s, ok := v.(string); ok {
 					v = state.string(s, ctx)
@@ -240,6 +241,8 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 				n[k] = v
 			}
 			value = n
+		} else if s, ok := trans.Rewrite.(string); ok {
+			value = state.string(s, ctx)
 		} else {
 			panic(fmt.Sprintf("got an unexpected rewriteValue type: %T", trans.Rewrite))
 		}
