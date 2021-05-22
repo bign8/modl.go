@@ -1512,7 +1512,6 @@ var unpackerTests = []UnpackerTest{
 	},
 	{
 		Name:  "ref-5",
-		Skip:  true,
 		Input: `{"a": 1, "b": 2, "c": 3}`,
 		Trans: `{
 			"a": {"rewriteValue": "%/compact.c"},

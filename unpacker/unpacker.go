@@ -46,14 +46,17 @@ func (u *Unpacker) AddTransform(key string, trans Transform) {
 func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 	state := &unpackState{ctx: u, mem: make(map[string]interface{})}
 
-	// pass one, extract the question mark lookup index
-	if err := json.Unmarshal(source, state); err != nil {
+	// pass one, extract the variable-index and memoize everything for `/compact.` namespaced vars
+	var compact map[string]interface{}
+	if err := json.Unmarshal(source, &compact); err != nil {
 		return nil, err
 	}
 
 	// memoize string replacements
-	augment("", state.Idx, state.mem)
+	augment("", compact["?"], state.mem)
 	augment("", u.Subs, state.mem)
+	augment("/subs.", u.Subs, state.mem)
+	augment("/compact.", compact, state.mem)
 	// fmt.Printf("Values: %#v\n", state.mem)
 
 	// pass two, process the data
@@ -64,7 +67,6 @@ func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 }
 
 type unpackState struct {
-	Idx []interface{} `json:"?"`
 	ctx Unpacker
 	dec *json.Decoder
 	mem map[string]interface{}
@@ -155,9 +157,6 @@ func (state unpackState) string(in string, subz map[string]interface{}) interfac
 			}
 		}
 	}
-
-	// TODO: dot lookups
-	// TODO: closing % replacements
 	return in
 }
 
