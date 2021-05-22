@@ -101,7 +101,8 @@ func (u *Unpacker) AddTransform(key string, trans Transform) {
 }
 
 func (u Unpacker) Unpack(source []byte) ([]byte, error) {
-	state := &unpackState{ctx: u, mem: make(map[string]interface{})}
+	state := &unpackState{mem: make(map[string]interface{})}
+	state.trans = append(state.trans, u.Transforms)
 
 	// pass one, extract the variable-index and memoize everything for `/compact.` namespaced vars
 	var compact map[string]interface{}
@@ -124,9 +125,9 @@ func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 }
 
 type unpackState struct {
-	ctx Unpacker
-	dec *json.Decoder
-	mem map[string]interface{}
+	dec   *json.Decoder
+	mem   map[string]interface{}
+	trans []map[string]Transform
 }
 
 func (state unpackState) value() interface{} {
@@ -160,11 +161,23 @@ func (state unpackState) object() map[string]interface{} {
 	o := map[string]interface{}{}
 	for state.dec.More() {
 		k := state.value().(string)
+
+		// Push transform state (for use when processing value)
+		trans, has_trans := state.getTransform(k)
+		if has_trans {
+			state.trans = append(state.trans, trans.Nesting)
+		}
+
 		v := state.value()
 		if k == "?" {
 			continue
 		}
 		state.transform(o, k, v)
+
+		// Pop transform state
+		if has_trans {
+			state.trans = state.trans[:len(state.trans)-1]
+		}
 	}
 	state.delim('}')
 	return o
@@ -228,9 +241,7 @@ func (state unpackState) delim(delim json.Delim) {
 }
 
 func (state unpackState) transform(dest map[string]interface{}, key string, value interface{}) {
-	// TODO: figure out how to respect NESTING!
-
-	trans, ok := state.ctx.Transforms[key]
+	trans, ok := state.getTransform(key)
 	if !ok {
 		dest[key] = value
 		return
@@ -341,4 +352,14 @@ func augment(prefix string, thing interface{}, target map[string]interface{}) {
 			augment(x+".", v, target)
 		}
 	}
+}
+
+func (state unpackState) getTransform(key string) (Transform, bool) {
+	for i := len(state.trans) - 1; i > 0; i-- {
+		if t, ok := state.trans[i][key]; ok {
+			return t, ok
+		}
+	}
+	t, ok := state.trans[0][key]
+	return t, ok
 }

@@ -1329,7 +1329,6 @@ var unpackerTests = []UnpackerTest{
 	},
 	{
 		Name: "trans-2",
-		Skip: true,
 		Input: `{
 			"t": 1,
 			"u": {"t": 2},
