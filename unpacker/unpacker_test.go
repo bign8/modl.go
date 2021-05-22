@@ -1378,7 +1378,7 @@ func (test UnpackerTest) out() []byte {
 	if err != nil {
 		panic(err)
 	}
-	bits, err := json.MarshalIndent(obj, "", " ")
+	bits, err := json.Marshal(obj)
 	if err != nil {
 		panic(err)
 	}

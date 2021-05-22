@@ -1,3 +1,4 @@
+// Package unpacker implements the logic described at https://www.unpacker.uk/ to unpack compressed JSON objects.
 package unpacker
 
 import (
@@ -8,11 +9,17 @@ import (
 	"strings"
 )
 
+// Unpakcker holds a set of Transforms and Substitutions needed to unpack compressed JSON.
+// This structure should allow the the Transform and Substitution object to only need to be parsed once,
+// while allowing multiple unpackings using the same configuration.
 type Unpacker struct {
 	Transforms map[string]Transform
 	Subs       Substitution
 }
 
+// A Transform holds information on how to modify various JSON objects.
+//
+// docs: https://www.unpacker.uk/specification#transformation-object
 type Transform struct {
 	Assign  []string               `json:"assignKeys,omitempty"`
 	Items   string                 `json:"arrayItems,omitempty"`
@@ -30,6 +37,7 @@ func (t Transform) String() string {
 	return string(x)
 }
 
+// internal for now but could be exposed, makes it so we can parse nested transforms without infinite recursive loops
 type trans Transform
 
 func (t *trans) UnmarshalJSON(bits []byte) error {
@@ -67,6 +75,9 @@ func (t trans) MarshalJSON() ([]byte, error) {
 	return bits, nil
 }
 
+// A Substitution object provides a method of removing repeditive data by having shortened keys.
+//
+// docs: https://www.unpacker.uk/specification#substitution-object
 type Substitution map[string]interface{}
 
 // ParseTransforms parses a set of json tranforms.
@@ -100,6 +111,10 @@ func (u *Unpacker) AddTransform(key string, trans Transform) {
 	u.Transforms[key] = trans
 }
 
+// Unpack expands JSON using the transforms and substitutions defined on the unpacker object.
+// Additionally, a viariadic index in the source data is also used to reduce size.
+//
+// docs: https://www.unpacker.uk/specification
 func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 	state := &unpackState{mem: make(map[string]interface{})}
 	state.trans = append(state.trans, u.Transforms)
