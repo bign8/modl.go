@@ -1294,7 +1294,6 @@ var unpackerTests = []UnpackerTest{
 	},
 	{
 		Name:   "variable-index-3",
-		Skip:   true,
 		Input:  `{"?": [["a", "b"], {"a": "alpha", "b": "bravo"}], "x": "%0.0%", "y": "%1.a%"}`,
 		Output: `{"x": "a", "y": "alpha"}`,
 	},
@@ -1308,7 +1307,6 @@ var unpackerTests = []UnpackerTest{
 	},
 	{
 		Name:   "sub-2",
-		Skip:   true,
 		Input:  `{"this": "%a.x%", "that": "%b.0%"}`,
 		Subs:   `{"a": {"x": "xray", "y": "yankee"}, "b": [1, 2]}`,
 		Output: `{"this": "xray", "that": 1}`,
@@ -1481,7 +1479,6 @@ var unpackerTests = []UnpackerTest{
 	},
 	{
 		Name: "ref-2",
-		Skip: true,
 		Input: `{
 			"?": [
 			  ["a", "b"],
@@ -1496,14 +1493,12 @@ var unpackerTests = []UnpackerTest{
 	},
 	{
 		Name:   "ref-3",
-		Skip:   true,
 		Input:  `{"a": {"b": {"c": 1}}}`,
 		Trans:  `{"a": {"rewriteValue": "%b.c"}}`,
 		Output: `{"a": 1}`,
 	},
 	{
 		Name: "ref-4",
-		Skip: true,
 		Input: `{
 			"a": ["alpha", "bravo", "charlie"]
 		  }`,

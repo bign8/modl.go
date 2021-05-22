@@ -44,13 +44,17 @@ func (u *Unpacker) AddTransform(key string, trans Transform) {
 }
 
 func (u Unpacker) Unpack(source []byte) ([]byte, error) {
-	state := &unpackState{ctx: u}
+	state := &unpackState{ctx: u, mem: make(map[string]interface{})}
 
 	// pass one, extract the question mark lookup index
 	if err := json.Unmarshal(source, state); err != nil {
 		return nil, err
 	}
-	// TODO: pre-process the question mark values
+
+	// memoize string replacements
+	augment("", state.Idx, state.mem)
+	augment("", u.Subs, state.mem)
+	// fmt.Printf("Values: %#v\n", state.mem)
 
 	// pass two, process the data
 	state.dec = json.NewDecoder(bytes.NewReader(source))
@@ -63,6 +67,7 @@ type unpackState struct {
 	Idx []interface{} `json:"?"`
 	ctx Unpacker
 	dec *json.Decoder
+	mem map[string]interface{}
 }
 
 func (state unpackState) value() interface{} {
@@ -83,7 +88,7 @@ func (state unpackState) value() interface{} {
 		}
 	case string:
 		// fmt.Printf("Got a string value: %q\n", token)
-		return state.string(v, state.ctx.Subs)
+		return state.string(v, nil)
 	case float64:
 		// fmt.Printf("Got an int value: %f\n", token)
 		return v
@@ -116,8 +121,8 @@ func (state unpackState) array() []interface{} {
 }
 
 func (state unpackState) string(in string, subz map[string]interface{}) interface{} {
-	for i, v := range state.Idx {
-		key := "%" + strconv.Itoa(i)
+	for k, v := range state.mem {
+		key := "%" + k
 		if in == key || in == key+"%" {
 			return v
 		}
@@ -149,7 +154,6 @@ func (state unpackState) string(in string, subz map[string]interface{}) interfac
 				in = strings.Replace(in, key+"%", s, -1)
 			}
 		}
-
 	}
 
 	// TODO: dot lookups
@@ -193,7 +197,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	if len(trans.Assign) != 0 {
 		list, ok := value.([]interface{})
 		if !ok {
-			fmt.Print("assignKeys for " + key + " but didn't get a list")
+			fmt.Println("assignKeys for " + key + " but didn't get a list")
 			return
 		}
 		if len(list) != len(trans.Assign) {
@@ -232,6 +236,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 		ctx := map[string]interface{}{
 			"self": value,
 		}
+		augment("", value, ctx)
 		if m, ok := trans.Rewrite.(map[string]interface{}); ok {
 			n := map[string]interface{}{} // ensure we don't duplicate the object
 			for k, v := range m {
@@ -255,4 +260,27 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 
 	// 5: actually assign object
 	dest[key] = value
+}
+
+func augment(prefix string, thing interface{}, target map[string]interface{}) {
+	switch value := thing.(type) {
+	case []interface{}:
+		for i, v := range value {
+			x := prefix + strconv.Itoa(i)
+			target[x] = v
+			augment(x+".", v, target)
+		}
+	case map[string]interface{}:
+		for k, v := range value {
+			x := prefix + k
+			target[x] = v
+			augment(x+".", v, target)
+		}
+	case Substitution: // map[string]interface{}
+		for k, v := range value {
+			x := prefix + k
+			target[x] = v
+			augment(x+".", v, target)
+		}
+	}
 }
