@@ -132,236 +132,72 @@ var unpackerTests = []UnpackerTest{
 	// Source: https://www.unpacker.uk/playground?e=3
 	{
 		Name: "playground-3",
-		Skip: true,
 		Input: `{
 			"@n": 1,
 			"o": {
 			  "n": "NUM Example Co",
 			  "s": "Example Strapline",
 			  "c": [
-				{
-				  "t": {
-					"d": "Customer Service",
-					"v": "+441270123456"
-				  }
-				},
-				{
-				  "fb": {
-					"v": "examplefacebook"
-				  }
-				},
-				{
-				  "in": {
-					"v": "exampleinstagram"
-				  }
-				},
-				{
-				  "tw": {
-					"v": "exampletwitter"
-				  }
-				}
+				{"t": {"d": "Customer Service", "v": "+441270123456"}},
+				{"fb": {"v": "examplefacebook"}},
+				{"in": {"v": "exampleinstagram"}},
+				{"tw": {"v": "exampletwitter"}}
 			  ]
 			}
 		  }`,
 		Subs: `{
 			"locale": {
-			  "p": {
-				"name": "Person"
-			  },
-			  "gr": {
-				"name": "Group"
-			  },
-			  "o": {
-				"name": "Organisation"
-			  },
-			  "dp": {
-				"name": "Department"
-			  },
-			  "e": {
-				"name": "Employee"
-			  },
-			  "lc": {
-				"name": "Location"
-			  },
-			  "gp": {
-				"name": "Group"
-			  },
-			  "t": {
-				"name": "Telephone",
-				"default": "Call"
-			  },
-			  "sm": {
-				"name": "SMS",
-				"default": "Text"
-			  },
-			  "u": {
-				"name": "Web URL",
-				"default": "Click"
-			  },
-			  "uu": {
-				"name": "Web URL (http - unsecure)",
-				"default": "Click"
-			  },
-			  "g": {
-				"name": "GPS",
-				"default": "View Location"
-			  },
-			  "a": {
-				"name": "Address",
-				"default": "View Address"
-			  },
-			  "fx": {
-				"name": "Fax",
-				"default": "Send a fax"
-			  },
-			  "em": {
-				"name": "Email",
-				"default": "Send an email"
-			  },
-			  "aa": {
-				"name": "Android App",
-				"default": "Download the app"
-			  },
-			  "as": {
-				"name": "iOS App",
-				"default": "Download the app"
-			  },
-			  "bt": {
-				"name": "Baidu Tieba",
-				"default": "View Baidu profile"
-			  },
-			  "fb": {
-				"name": "Facebook",
-				"default": "View Facebook profile"
-			  },
-			  "fs": {
-				"name": "FourSquare",
-				"default": "View FourSquare page"
-			  },
-			  "ft": {
-				"name": "FaceTime",
-				"default": "Call with Facetime"
-			  },
-			  "gh": {
-				"name": "Github",
-				"default": "View Github profile"
-			  },
-			  "im": {
-				"name": "iMessage",
-				"default": "Send iMessage"
-			  },
-			  "in": {
-				"name": "Instagram",
-				"default": "View Instagram profile"
-			  },
-			  "kk": {
-				"name": "Kik",
-				"default": "Connect with Kik"
-			  },
-			  "li": {
-				"name": "LinkedIn",
-				"default": "View LinkedIn page"
-			  },
-			  "ln": {
-				"name": "Line",
-				"default": "Connect with Line"
-			  },
-			  "md": {
-				"name": "Medium",
-				"default": "View Medium blog"
-			  },
-			  "pr": {
-				"name": "Periscope",
-				"default": "View Periscope profile"
-			  },
-			  "pi": {
-				"name": "Pinterest",
-				"default": "View Pinterest board"
-			  },
-			  "qq": {
-				"name": "QQ",
-				"default": "View QQ Page"
-			  },
-			  "qz": {
-				"name": "Qzone",
-				"default": "View Qzone Page"
-			  },
-			  "rd": {
-				"name": "Reddit",
-				"default": "View subreddit"
-			  },
-			  "rn": {
-				"name": "Renren",
-				"default": "View Renren profile"
-			  },
-			  "sc": {
-				"name": "Soundcloud",
-				"default": "View Soundcloud page"
-			  },
-			  "sk": {
-				"name": "Skype",
-				"default": "Call with Skype"
-			  },
-			  "sr": {
-				"name": "Swarm",
-				"default": "Connect with Swarm"
-			  },
-			  "sn": {
-				"name": "Snapchat",
-				"default": "Connect with Snapchat"
-			  },
-			  "sw": {
-				"name": "Sina Weibo",
-				"default": "View Weibo page"
-			  },
-			  "tb": {
-				"name": "Tumblr",
-				"default": "View Tumblr blog"
-			  },
-			  "tl": {
-				"name": "Telegram",
-				"default": "Connect with Telegram"
-			  },
-			  "tw": {
-				"name": "Twitter",
-				"default": "View Twitter profile"
-			  },
-			  "to": {
-				"name": "Twoo",
-				"default": "View Twoo page"
-			  },
-			  "vb": {
-				"name": "Viber",
-				"default": "Call with Viber"
-			  },
-			  "vk": {
-				"name": "Vkontakte",
-				"default": "View VK page"
-			  },
-			  "vm": {
-				"name": "Vimeo",
-				"default": "View Vimeo profile"
-			  },
-			  "wa": {
-				"name": "Whatsapp",
-				"default": "Message on Whatsapp"
-			  },
-			  "wc": {
-				"name": "WeChat",
-				"default": "Connect with WeChat"
-			  },
-			  "xi": {
-				"name": "Xing",
-				"default": "View Xing page"
-			  },
-			  "yt": {
-				"name": "YouTube",
-				"default": "View YouTube channel"
-			  },
-			  "yy": {
-				"name": "YY",
-				"default": "View YY page"
-			  }
+			  "p": {"name": "Person"},
+			  "gr": {"name": "Group"},
+			  "o": {"name": "Organisation"},
+			  "dp": {"name": "Department"},
+			  "e": {"name": "Employee"},
+			  "lc": {"name": "Location"},
+			  "gp": {"name": "Group"},
+			  "t": {"name": "Telephone", "default": "Call"},
+			  "sm": {"name": "SMS", "default": "Text"},
+			  "u": {"name": "Web URL", "default": "Click"},
+			  "uu": {"name": "Web URL (http - unsecure)", "default": "Click"},
+			  "g": {"name": "GPS", "default": "View Location"},
+			  "a": {"name": "Address", "default": "View Address"},
+			  "fx": {"name": "Fax", "default": "Send a fax"},
+			  "em": {"name": "Email", "default": "Send an email"},
+			  "aa": {"name": "Android App", "default": "Download the app"},
+			  "as": {"name": "iOS App", "default": "Download the app"},
+			  "bt": {"name": "Baidu Tieba", "default": "View Baidu profile"},
+			  "fb": {"name": "Facebook", "default": "View Facebook profile"},
+			  "fs": {"name": "FourSquare", "default": "View FourSquare page"},
+			  "ft": {"name": "FaceTime", "default": "Call with Facetime"},
+			  "gh": {"name": "Github", "default": "View Github profile"},
+			  "im": {"name": "iMessage", "default": "Send iMessage"},
+			  "in": {"name": "Instagram", "default": "View Instagram profile"},
+			  "kk": {"name": "Kik", "default": "Connect with Kik"},
+			  "li": {"name": "LinkedIn", "default": "View LinkedIn page"},
+			  "ln": {"name": "Line", "default": "Connect with Line"},
+			  "md": {"name": "Medium", "default": "View Medium blog"},
+			  "pr": {"name": "Periscope", "default": "View Periscope profile"},
+			  "pi": {"name": "Pinterest", "default": "View Pinterest board"},
+			  "qq": {"name": "QQ", "default": "View QQ Page"},
+			  "qz": {"name": "Qzone", "default": "View Qzone Page"},
+			  "rd": {"name": "Reddit", "default": "View subreddit"},
+			  "rn": {"name": "Renren", "default": "View Renren profile"},
+			  "sc": {"name": "Soundcloud", "default": "View Soundcloud page"},
+			  "sk": {"name": "Skype", "default": "Call with Skype"},
+			  "sr": {"name": "Swarm", "default": "Connect with Swarm"},
+			  "sn": {"name": "Snapchat", "default": "Connect with Snapchat"},
+			  "sw": {"name": "Sina Weibo", "default": "View Weibo page"},
+			  "tb": {"name": "Tumblr", "default": "View Tumblr blog"},
+			  "tl": {"name": "Telegram", "default": "Connect with Telegram"},
+			  "tw": {"name": "Twitter", "default": "View Twitter profile"},
+			  "to": {"name": "Twoo", "default": "View Twoo page"},
+			  "vb": {"name": "Viber", "default": "Call with Viber"},
+			  "vk": {"name": "Vkontakte", "default": "View VK page"},
+			  "vm": {"name": "Vimeo", "default": "View Vimeo profile"},
+			  "wa": {"name": "Whatsapp", "default": "Message on Whatsapp"},
+			  "wc": {"name": "WeChat", "default": "Connect with WeChat"},
+			  "xi": {"name": "Xing", "default": "View Xing page"},
+			  "yt": {"name": "YouTube", "default": "View YouTube channel"},
+			  "yy": {"name": "YY", "default": "View YY page"}
 			},
 			"AC": "Accounts",
 			"CS": "Customer Service"
@@ -1542,7 +1378,7 @@ func (test UnpackerTest) out() []byte {
 	if err != nil {
 		panic(err)
 	}
-	bits, err := json.Marshal(obj)
+	bits, err := json.MarshalIndent(obj, "", " ")
 	if err != nil {
 		panic(err)
 	}

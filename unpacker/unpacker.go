@@ -262,13 +262,12 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 		return // not much else we can do here
 	}
 
+	// 0.5: Start building context (assign keys can modify some default values here)
+	ctx := map[string]interface{}{}
+
 	// 1. Assign(assignKeys) converts arrays to objects
-	if len(trans.Assign) != 0 {
-		list, ok := value.([]interface{})
-		if !ok {
-			fmt.Println("assignKeys for " + key + " but didn't get a list")
-			return
-		}
+	if list, is_list := value.([]interface{}); len(trans.Assign) != 0 && is_list {
+		// iff value is an array, convert the keys as specified
 		if len(list) != len(trans.Assign) {
 			panic(fmt.Sprintf("assignKeys for %s expected %d but got %d keys", key, len(trans.Assign), len(list)))
 		}
@@ -277,19 +276,22 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 			state.transform(newValue, trans.Assign[i], v) // recurse to assign key/values
 		}
 		value = newValue
+	} else if m, is_map := value.(map[string]interface{}); len(trans.Assign) != 0 && is_map {
+		// iff the object is a map, make sure missing keys are assigned as null (ctx resolvers use this later)
+		for _, k := range trans.Assign {
+			if _, ok := m[k]; !ok {
+				m[k] = nil
+			}
+		}
 	}
+
+	// 1.5: update ctx as necessary
+	ctx["self"] = value
+	augment("", value, ctx)
+	// fmt.Printf("Got context: %v\n", ctx)
 
 	// 2: replacePair and exit
 	if trans.Return != nil {
-		ctx := map[string]interface{}{
-			"self": value,
-		}
-		if m, ok := value.(map[string]interface{}); ok {
-			for k, v := range m {
-				ctx[k] = v
-			}
-		}
-		// fmt.Printf("Got replacer: %v\n", value)
 		for k, v := range trans.Return {
 			// TODO: smarter string resolves
 			if s, ok := v.(string); ok {
@@ -302,10 +304,6 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 
 	// 3: rewriteValue
 	if trans.Rewrite != nil {
-		ctx := map[string]interface{}{
-			"self": value,
-		}
-		augment("", value, ctx)
 		if m, ok := trans.Rewrite.(map[string]interface{}); ok {
 			n := map[string]interface{}{} // ensure we don't duplicate the object
 			for k, v := range m {
