@@ -19,13 +19,70 @@ type Transform struct {
 	Key     string                 `json:"rewriteKey,omitempty"`
 	Return  map[string]interface{} `json:"replacePair,omitempty"`  // can be "null" to nuke a pair (how?)
 	Rewrite interface{}            `json:"rewriteValue,omitempty"` // freeform object
+	Nesting map[string]Transform   `json:"-"`
+}
+
+func (t Transform) String() string {
+	x, err := json.Marshal(trans(t))
+	if err != nil {
+		return err.Error()
+	}
+	return string(x)
+}
+
+type trans Transform
+
+func (t *trans) UnmarshalJSON(bits []byte) error {
+	x := Transform{}
+	dec := json.NewDecoder(bytes.NewReader(bits))
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&x)
+
+	// attempt to recurse through nested instructions
+	if err != nil {
+		x.Nesting, err = ParseTransforms(bits)
+		if err != nil {
+			return err
+		}
+	}
+	*t = trans(x)
+	return nil
+}
+
+// Requies some weirdness to encode the Nested definitions as well
+func (t trans) MarshalJSON() ([]byte, error) {
+	bits, err := json.Marshal(Transform(t))
+	if err != nil || len(t.Nesting) == 0 {
+		return bits, err
+	}
+	nest := make(map[string]trans, len(t.Nesting))
+	for k, v := range t.Nesting {
+		nest[k] = trans(v)
+	}
+	nesting, err := json.Marshal(nest)
+	if err != nil {
+		return nil, err
+	}
+	bits = append(bits[:len(bits)-1], nesting[1:]...)
+	return bits, nil
 }
 
 type Substitution map[string]interface{}
 
+// ParseTransforms parses a set of json tranforms.
+// Transforms can be embeded, so the bulk of this logic is to properly parse embedded transforms.
+// Example: {"k": {"e": {"y": {/*transform object*/}}}}
 func ParseTransforms(transforms []byte) (map[string]Transform, error) {
-	v := map[string]Transform{}
-	return v, json.Unmarshal(transforms, &v)
+	v := map[string]trans{}
+	err := json.Unmarshal(transforms, &v)
+	if err != nil {
+		return nil, err
+	}
+	u := make(map[string]Transform, len(v))
+	for k, x := range v {
+		u[k] = Transform(x)
+	}
+	return u, err
 }
 
 func (u *Unpacker) AddSubs(subs Substitution) {
@@ -171,6 +228,8 @@ func (state unpackState) delim(delim json.Delim) {
 }
 
 func (state unpackState) transform(dest map[string]interface{}, key string, value interface{}) {
+	// TODO: figure out how to respect NESTING!
+
 	trans, ok := state.ctx.Transforms[key]
 	if !ok {
 		dest[key] = value

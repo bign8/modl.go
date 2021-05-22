@@ -1332,42 +1332,18 @@ var unpackerTests = []UnpackerTest{
 		Skip: true,
 		Input: `{
 			"t": 1,
-			"u": {
-			  "t": 2
-			},
-			"v": {
-			  "w": {
-				"t": 3
-			  }
-			}
+			"u": {"t": 2},
+			"v": {"w": {"t": 3}}
 		  }`,
 		Trans: `{
-			"t": {
-			  "rewriteKey": "testing"
-			},
-			"u": {
-			  "t": {
-				"rewriteKey": "testing2"
-			  }
-			},
-			"v": {
-			  "w": {
-				"t": {
-				  "rewriteKey": "testing3"
-				}
-			  }
-			}
+			"t": {"rewriteKey": "testing"},
+			"u": {"t": {"rewriteKey": "testing2"}},
+			"v": {"w": {"t": {"rewriteKey": "testing3"}}}
 		  }`,
 		Output: `{
 			"testing": 1,
-			"u": {
-			  "testing2": 2
-			},
-			"v": {
-			  "w": {
-				"testing3": 3
-			  }
-			}
+			"u": {"testing2": 2},
+			"v": {"w": {"testing3": 3}}
 		  }`,
 	},
 	{
@@ -1542,6 +1518,7 @@ func (test *UnpackerTest) Run(t *testing.T) {
 			t.Fatalf("Unable to parse transforms: %v", err)
 		}
 		u.Transforms = trans
+		// fmt.Printf("Got Transforms: %v\n", trans)
 	}
 	if test.Subs != `` {
 		subs := make(Substitution)
