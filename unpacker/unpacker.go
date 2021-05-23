@@ -87,6 +87,7 @@ func ParseTransforms(transforms []byte) (map[string]Transform, error) {
 	v := map[string]trans{}
 	err := json.Unmarshal(transforms, &v)
 	if err != nil {
+		fmt.Printf("failed parsing: %s\n", string(transforms))
 		return nil, err
 	}
 	u := make(map[string]Transform, len(v))
@@ -120,13 +121,15 @@ func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 	state.trans = append(state.trans, u.Transforms)
 
 	// pass one, extract the variable-index and memoize everything for `/compact.` namespaced vars
-	var compact map[string]interface{}
+	var compact interface{}
 	if err := json.Unmarshal(source, &compact); err != nil {
 		return nil, err
 	}
 
 	// memoize string replacements
-	augment("", compact["?"], state.mem)
+	if obj, ok := compact.(map[string]interface{}); ok {
+		augment("", obj["?"], state.mem)
+	}
 	augment("", u.Subs, state.mem)
 	augment("/subs.", u.Subs, state.mem)
 	augment("/compact.", compact, state.mem)
@@ -167,6 +170,8 @@ func (state unpackState) value() interface{} {
 	case float64:
 		// fmt.Printf("Got an int value: %f\n", token)
 		return v
+	case nil:
+		return nil
 	default:
 		panic(fmt.Sprintf("Unknown type: %T", token))
 	}
@@ -241,6 +246,10 @@ func (state unpackState) string(in string, subz map[string]interface{}) interfac
 				in = strings.Replace(in, key+"%", s, -1)
 			}
 		}
+	}
+	// assume some part of the full thing was a key (likely a bug, need a beter way to do this)
+	if strings.HasPrefix(in, "%") {
+		return nil
 	}
 	return in
 }
