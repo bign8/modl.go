@@ -10,8 +10,8 @@ import (
 type UnpackerTest struct {
 	ID     string
 	Input  json.RawMessage
-	Subs   json.RawMessage
-	Trans  json.RawMessage
+	Subs   Substitution
+	Trans  map[string]Transform
 	Output json.RawMessage
 	Skip   bool
 }
@@ -22,19 +22,11 @@ func (test *UnpackerTest) Run(t *testing.T) {
 	}
 	u := &Unpacker{}
 	if len(test.Trans) != 0 {
-		trans, err := ParseTransforms([]byte(test.Trans))
-		if err != nil {
-			t.Fatalf("Unable to parse transforms: %v", err)
-		}
-		u.Transforms = trans
-		// fmt.Printf("Got Transforms: %v\n", trans)
+		u.Transforms = test.Trans
+		// fmt.Printf("Got Transforms: %v\n", u.Transforms)
 	}
 	if len(test.Subs) != 0 {
-		subs := make(Substitution)
-		if err := json.Unmarshal([]byte(test.Subs), &subs); err != nil {
-			t.Fatalf("Unable to parse substition: %v", err)
-		}
-		u.AddSubs(subs)
+		u.AddSubs(test.Subs)
 	}
 	output, err := u.Unpack([]byte(test.Input))
 	if err != nil {
@@ -60,7 +52,6 @@ func (test UnpackerTest) out() []byte {
 }
 
 var skip = map[string]bool{
-	"Unpacker-07": true, // transform with variadic-index reference
 	"Unpacker-13": true, // arrayItems + nested
 	"Unpacker-14": true, // arrayItems + nested
 	"Unpacker-":   true,

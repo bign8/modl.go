@@ -149,7 +149,10 @@ func (u *Unpacker) AddTransform(key string, trans Transform) {
 //
 // docs: https://www.unpacker.uk/specification
 func (u Unpacker) Unpack(source []byte) ([]byte, error) {
-	state := &unpackState{mem: make(map[string]interface{})}
+	state := &unpackState{
+		fullMem:   make(map[string]interface{}),
+		noVariMem: make(map[string]interface{}),
+	}
 	state.trans = append(state.trans, u.Transforms)
 
 	// pass one, extract the variable-index and memoize everything for `/compact.` namespaced vars
@@ -160,11 +163,14 @@ func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 
 	// memoize string replacements
 	if obj, ok := compact.(map[string]interface{}); ok {
-		augment("", obj["?"], state.mem)
+		augment("", obj["?"], state.fullMem)
 	}
-	augment("", u.Subs, state.mem)
-	augment("/subs.", u.Subs, state.mem)
-	augment("/compact.", compact, state.mem)
+	augment("", u.Subs, state.fullMem)
+	augment("", u.Subs, state.noVariMem)
+	augment("/subs.", u.Subs, state.fullMem)
+	augment("/subs.", u.Subs, state.noVariMem)
+	augment("/compact.", compact, state.fullMem)
+	augment("/compact.", compact, state.noVariMem)
 	// fmt.Printf("Values: %#v\n", state.mem)
 
 	// pass two, process the data
@@ -175,9 +181,10 @@ func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 }
 
 type unpackState struct {
-	dec   *json.Decoder
-	mem   map[string]interface{}
-	trans []map[string]Transform
+	dec       *json.Decoder
+	fullMem   map[string]interface{}
+	noVariMem map[string]interface{}
+	trans     []map[string]Transform
 }
 
 func (state unpackState) value() interface{} {
@@ -198,7 +205,7 @@ func (state unpackState) value() interface{} {
 		}
 	case string:
 		// fmt.Printf("Got a string value: %q\n", token)
-		return state.string(v, nil)
+		return state.string(v, state.fullMem)
 	case float64:
 		// fmt.Printf("Got an int value: %f\n", token)
 		return v
@@ -245,23 +252,8 @@ func (state unpackState) array() []interface{} {
 }
 
 func (state unpackState) string(in string, subz map[string]interface{}) interface{} {
-	for k, v := range state.mem {
-		key := "%" + k
-		if in == key || in == key+"%" {
-			return v
-		}
-		if s, ok := v.(string); ok {
-			if strings.HasSuffix(in, key) {
-				in = strings.TrimSuffix(in, key) + s
-			}
-			if strings.Contains(in, key+" ") {
-				in = strings.Replace(in, key+" ", s+" ", -1)
-			}
-			if strings.Contains(in, key+"%") {
-				in = strings.Replace(in, key+"%", s, -1)
-			}
-		}
-	}
+	// NOTE: state is not used, but is left as a potential memory optimization
+	// (array of contexts or logic to switch between allowing viariadic or not)
 	for k, v := range subz {
 		key := "%" + k
 		if in == key || in == key+"%" {
@@ -319,7 +311,10 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	}
 
 	// 0.5: Start building context (assign keys can modify some default values here)
-	ctx := map[string]interface{}{}
+	ctx := make(map[string]interface{}, len(state.fullMem))
+	for k, v := range state.noVariMem {
+		ctx[k] = v
+	}
 
 	// 1. Assign(assignKeys) converts arrays to objects
 	if list, is_list := value.([]interface{}); len(trans.Assign) != 0 && is_list {
