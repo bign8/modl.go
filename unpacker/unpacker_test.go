@@ -61,12 +61,8 @@ func (test UnpackerTest) out() []byte {
 
 var skip = map[string]bool{
 	"Unpacker-07": true, // transform with variadic-index reference
-	"Unpacker-09": true, // replacePair: null
-	"Unpacker-10": true, // rewriteValue: null
-	"Unpacker-13": true,
-	"Unpacker-14": true, // transforms with reserved-keys alongside user-keys
-	"Nested-01":   true, // transforms with reserved-keys alongside user-keys
-	"Nested-03":   true, // transforms with reserved-keys alongside user-keys
+	"Unpacker-13": true, // arrayItems + nested
+	"Unpacker-14": true, // arrayItems + nested
 	"Unpacker-":   true,
 }
 

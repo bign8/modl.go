@@ -20,59 +20,100 @@ type Unpacker struct {
 // A Transform holds information on how to modify various JSON objects.
 //
 // docs: https://www.unpacker.uk/specification#transformation-object
+//
+// Note: field tags are included on this object for convience as the real work is performed in Un/MarshalJSON.
 type Transform struct {
-	Assign  []string               `json:"assignKeys,omitempty"`
-	Items   string                 `json:"arrayItems,omitempty"`
-	Key     string                 `json:"rewriteKey,omitempty"`
-	Return  map[string]interface{} `json:"replacePair,omitempty"`  // can be "null" to nuke a pair (how?)
-	Rewrite interface{}            `json:"rewriteValue,omitempty"` // freeform object
-	Nesting map[string]Transform   `json:"-"`
+	Assign      []string               `json:"assignKeys,omitempty"`
+	Items       string                 `json:"arrayItems,omitempty"`
+	Key         string                 `json:"rewriteKey,omitempty"`
+	Return      map[string]interface{} `json:"replacePair,omitempty"` // can be "null" to nuke a pair (how?)
+	ReturnNull  bool                   `json:"-"`
+	Rewrite     interface{}            `json:"rewriteValue,omitempty"` // freeform object
+	RewriteNull bool                   `json:"-"`
+	Nesting     map[string]Transform   `json:"-"`
+}
+
+func (t *Transform) UnmarshalJSON(bits []byte) error {
+	// TODO: emit errors if the types are wrong
+	trans := make(map[string]interface{}) // todo: map string to json.RawMessage?
+	if err := json.Unmarshal(bits, &trans); err != nil {
+		return err
+	}
+	if assign, ok := trans["assignKeys"].([]interface{}); ok {
+		t.Assign = make([]string, 0, len(assign))
+		for _, a := range assign {
+			t.Assign = append(t.Assign, a.(string))
+		}
+		delete(trans, "assignKeys")
+	}
+	if items, ok := trans["arrayItems"].(string); ok {
+		t.Items = items
+		delete(trans, "arrayItems")
+	}
+	if key, ok := trans["rewriteKey"].(string); ok {
+		t.Key = key
+		delete(trans, "rewriteKey")
+	}
+	if replace, ok := trans["replacePair"]; ok {
+		if replace == nil {
+			t.ReturnNull = true
+		} else if rep, ok := replace.(map[string]interface{}); ok {
+			t.Return = rep
+		}
+		delete(trans, "replacePair")
+	}
+	if rewrite, ok := trans["rewriteValue"]; ok {
+		if rewrite == nil {
+			t.RewriteNull = true
+		} else {
+			t.Rewrite = rewrite
+		}
+		delete(trans, "rewriteValue")
+	}
+	if len(trans) > 0 {
+		t.Nesting = make(map[string]Transform)
+		bits, err := json.Marshal(trans)
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(bits, &t.Nesting)
+	}
+	return nil
+}
+
+func (t Transform) MarshalJSON() ([]byte, error) {
+	trans := make(map[string]interface{})
+	if len(t.Assign) > 0 {
+		trans["assignKeys"] = t.Assign
+	}
+	if t.Items != "" {
+		trans["arrayItems"] = t.Items
+	}
+	if t.Key != "" {
+		trans["rewriteKey"] = t.Key
+	}
+	if t.ReturnNull {
+		trans["replacePair"] = nil
+	} else if t.Return != nil {
+		trans["replacePair"] = t.Return
+	}
+	if t.RewriteNull {
+		trans["rewriteValue"] = nil
+	} else if t.Rewrite != nil {
+		trans["rewriteValue"] = t.Rewrite
+	}
+	for k, v := range t.Nesting {
+		trans[k] = v
+	}
+	return json.Marshal(trans)
 }
 
 func (t Transform) String() string {
-	x, err := json.Marshal(trans(t))
+	x, err := json.Marshal(t)
 	if err != nil {
 		return err.Error()
 	}
 	return string(x)
-}
-
-// internal for now but could be exposed, makes it so we can parse nested transforms without infinite recursive loops
-type trans Transform
-
-func (t *trans) UnmarshalJSON(bits []byte) error {
-	x := Transform{}
-	dec := json.NewDecoder(bytes.NewReader(bits))
-	dec.DisallowUnknownFields()
-	err := dec.Decode(&x)
-
-	// attempt to recurse through nested instructions
-	if err != nil {
-		x.Nesting, err = ParseTransforms(bits)
-		if err != nil {
-			return err
-		}
-	}
-	*t = trans(x)
-	return nil
-}
-
-// Requies some weirdness to encode the Nested definitions as well
-func (t trans) MarshalJSON() ([]byte, error) {
-	bits, err := json.Marshal(Transform(t))
-	if err != nil || len(t.Nesting) == 0 {
-		return bits, err
-	}
-	nest := make(map[string]trans, len(t.Nesting))
-	for k, v := range t.Nesting {
-		nest[k] = trans(v)
-	}
-	nesting, err := json.Marshal(nest)
-	if err != nil {
-		return nil, err
-	}
-	bits = append(bits[:len(bits)-1], nesting[1:]...)
-	return bits, nil
 }
 
 // A Substitution object provides a method of removing repeditive data by having shortened keys.
@@ -84,17 +125,8 @@ type Substitution map[string]interface{}
 // Transforms can be embeded, so the bulk of this logic is to properly parse embedded transforms.
 // Example: {"k": {"e": {"y": {/*transform object*/}}}}
 func ParseTransforms(transforms []byte) (map[string]Transform, error) {
-	v := map[string]trans{}
-	err := json.Unmarshal(transforms, &v)
-	if err != nil {
-		fmt.Printf("failed parsing: %s\n", string(transforms))
-		return nil, err
-	}
-	u := make(map[string]Transform, len(v))
-	for k, x := range v {
-		u[k] = Transform(x)
-	}
-	return u, err
+	v := map[string]Transform{}
+	return v, json.Unmarshal(transforms, &v)
 }
 
 func (u *Unpacker) AddSubs(subs Substitution) {
@@ -315,7 +347,9 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	// fmt.Printf("Got context: %v\n", ctx)
 
 	// 2: replacePair and exit
-	if trans.Return != nil {
+	if trans.ReturnNull {
+		return // if replacePair is null, the key should not be assigned
+	} else if trans.Return != nil {
 		for k, v := range trans.Return {
 			// TODO: smarter string resolves
 			if s, ok := v.(string); ok {
@@ -327,7 +361,10 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	}
 
 	// 3: rewriteValue
-	if trans.Rewrite != nil {
+	if trans.RewriteNull {
+		dest[key] = nil // if rewriteValue is null, assign value to null
+		return
+	} else if trans.Rewrite != nil {
 		if m, ok := trans.Rewrite.(map[string]interface{}); ok {
 			n := map[string]interface{}{} // ensure we don't duplicate the object
 			for k, v := range m {
