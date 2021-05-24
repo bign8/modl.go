@@ -28,6 +28,7 @@ type Transform struct {
 	Key         string                 `json:"rewriteKey,omitempty"`
 	Return      map[string]interface{} `json:"replacePair,omitempty"` // can be "null" to nuke a pair (how?)
 	ReturnNull  bool                   `json:"-"`
+	ReturnStr   string                 `json:"-"`                      // replacePair: "%self"
 	Rewrite     interface{}            `json:"rewriteValue,omitempty"` // freeform object
 	RewriteNull bool                   `json:"-"`
 	Nesting     map[string]Transform   `json:"-"`
@@ -57,6 +58,8 @@ func (t *Transform) UnmarshalJSON(bits []byte) error {
 	if replace, ok := trans["replacePair"]; ok {
 		if replace == nil {
 			t.ReturnNull = true
+		} else if str, ok := replace.(string); ok {
+			t.ReturnStr = str
 		} else if rep, ok := replace.(map[string]interface{}); ok {
 			t.Return = rep
 		}
@@ -94,6 +97,8 @@ func (t Transform) MarshalJSON() ([]byte, error) {
 	}
 	if t.ReturnNull {
 		trans["replacePair"] = nil
+	} else if t.ReturnStr != "" {
+		trans["replacePair"] = t.ReturnStr
 	} else if t.Return != nil {
 		trans["replacePair"] = t.Return
 	}
@@ -222,16 +227,31 @@ func (state unpackState) object() map[string]interface{} {
 		k := state.value().(string)
 
 		// Push transform state (for use when processing value)
+		var has_arr_trans bool
 		trans, has_trans := state.getTransform(k)
 		if has_trans {
 			state.trans = append(state.trans, trans.Nesting)
 		}
-
-		v := state.value()
-		if k == "?" {
-			continue
+		if has_trans && trans.Items != "" {
+			var arr_trans Transform
+			arr_trans, has_arr_trans = state.getTransform(trans.Items)
+			if has_arr_trans {
+				state.trans = append(state.trans, arr_trans.Nesting)
+			}
 		}
-		state.transform(o, k, v)
+
+		// Parse the value!
+		v := state.value()
+
+		// Pop arr_trans
+		if has_arr_trans {
+			state.trans = state.trans[:len(state.trans)-1]
+		}
+
+		// if we aren't the variadic index, transform data (time saver?)
+		if k != "?" {
+			state.transform(o, k, v)
+		}
 
 		// Pop transform state
 		if has_trans {
@@ -301,11 +321,27 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 		if !ok {
 			panic(fmt.Sprintf("arrayItems set need an array; %T", value))
 		}
+
+		// Push transform state (for use when processing value)
+		sub_trans, has_trans := state.getTransform(trans.Items)
+		if has_trans {
+			state.trans = append(state.trans, map[string]Transform{
+				trans.Items: sub_trans,
+			})
+		}
+
+		// todo: push context of trans.Items onto stack@!
 		for i, v := range list {
 			n := map[string]interface{}{} // TODO: preallocate size
 			state.transform(n, trans.Items, v)
 			list[i] = n
 		}
+
+		// Pop transform state
+		if has_trans {
+			state.trans = state.trans[:len(state.trans)-1]
+		}
+
 		dest[key] = list
 		return // not much else we can do here
 	}
@@ -344,6 +380,15 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	// 2: replacePair and exit
 	if trans.ReturnNull {
 		return // if replacePair is null, the key should not be assigned
+	} else if trans.ReturnStr != "" {
+		obj := state.string(trans.ReturnStr, ctx)
+		if m, ok := obj.(map[string]interface{}); ok {
+			for k, v := range m {
+				dest[k] = v
+			}
+			return
+		}
+		panic(fmt.Sprintf("Got unexpected ReturnString type: %T", obj))
 	} else if trans.Return != nil {
 		for k, v := range trans.Return {
 			// TODO: smarter string resolves
