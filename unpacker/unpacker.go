@@ -211,7 +211,7 @@ func (state unpackState) value() interface{} {
 	case string:
 		// fmt.Printf("Got a string value: %q\n", token)
 		return state.string(v, state.fullMem)
-	case float64:
+	case float64, bool:
 		// fmt.Printf("Got an int value: %f\n", token)
 		return v
 	case nil:

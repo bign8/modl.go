@@ -67,16 +67,13 @@ func (test UnpackerTest) out() []byte {
 var skip = map[string]bool{
 	"all-step-3a-1":     true, // assign key + replace pair?
 	"all-step-3a-2":     true, // assign key + replace...
-	"Supplementary-1":   true, // unexpected bool
 	"Supplementary-2":   true, // % escapes?
 	"Supplementary-3":   true, // unresolved refs
 	"Supplementary-4":   true, // implicit replacePair: null
 	"ObjectUnpacker-01": true,
 	"ObjectUnpacker-04": true,
-	"ObjectUnpacker-06": true, // unexpected bool
 	"ObjectUnpacker-07": true,
-	"ObjectUnpacker-10": true,
-	"ObjectUnpacker-13": true, // unexpected bool
+	"ObjectUnpacker-10": true, // assign key + rewrite value
 }
 
 func TestUnpacker(t *testing.T) {
