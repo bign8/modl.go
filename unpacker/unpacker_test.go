@@ -52,8 +52,7 @@ func (test UnpackerTest) out() []byte {
 }
 
 var skip = map[string]bool{
-	"Unpacker-13": true, // arrayItems + nested
-	"Unpacker-":   true,
+	"Unpacker-": true,
 }
 
 func TestUnpacker(t *testing.T) {

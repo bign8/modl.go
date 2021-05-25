@@ -342,8 +342,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 			state.trans = state.trans[:len(state.trans)-1]
 		}
 
-		dest[key] = list
-		return // not much else we can do here
+		value = list
 	}
 
 	// 0.5: Start building context (assign keys can modify some default values here)
