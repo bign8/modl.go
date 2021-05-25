@@ -210,7 +210,7 @@ func (state unpackState) value() interface{} {
 		}
 	case string:
 		// fmt.Printf("Got a string value: %q\n", token)
-		return state.string(v, state.fullMem)
+		return resolveString(v, state.fullMem)
 	case float64, bool:
 		// fmt.Printf("Got an int value: %f\n", token)
 		return v
@@ -271,7 +271,22 @@ func (state unpackState) array() []interface{} {
 	return o
 }
 
-func (state unpackState) string(in string, subz map[string]interface{}) interface{} {
+func resolveObject(o interface{}, ctx map[string]interface{}) interface{} {
+	switch v := o.(type) {
+	case string:
+		return resolveString(v, ctx)
+	case map[string]interface{}:
+		u := make(map[string]interface{}, len(v)) // duplicate in case of modifications
+		for k, w := range v {
+			u[k] = resolveObject(w, ctx)
+		}
+		return u
+	default:
+		return o
+	}
+}
+
+func resolveString(in string, subz map[string]interface{}) interface{} {
 	// NOTE: state is not used, but is left as a potential memory optimization
 	// (array of contexts or logic to switch between allowing viariadic or not)
 	for k, v := range subz {
@@ -380,7 +395,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	if trans.ReturnNull {
 		return // if replacePair is null, the key should not be assigned
 	} else if trans.ReturnStr != "" {
-		obj := state.string(trans.ReturnStr, ctx)
+		obj := resolveString(trans.ReturnStr, ctx)
 		if m, ok := obj.(map[string]interface{}); ok {
 			for k, v := range m {
 				dest[k] = v
@@ -390,11 +405,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 		panic(fmt.Sprintf("Got unexpected ReturnString type: %T", obj))
 	} else if trans.Return != nil {
 		for k, v := range trans.Return {
-			// TODO: smarter string resolves
-			if s, ok := v.(string); ok {
-				v = state.string(s, ctx)
-			}
-			dest[k] = v
+			dest[k] = resolveObject(v, ctx)
 		}
 		return
 	}
@@ -404,20 +415,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 		dest[key] = nil // if rewriteValue is null, assign value to null
 		return
 	} else if trans.Rewrite != nil {
-		if m, ok := trans.Rewrite.(map[string]interface{}); ok {
-			n := map[string]interface{}{} // ensure we don't duplicate the object
-			for k, v := range m {
-				if s, ok := v.(string); ok {
-					v = state.string(s, ctx)
-				}
-				n[k] = v
-			}
-			value = n
-		} else if s, ok := trans.Rewrite.(string); ok {
-			value = state.string(s, ctx)
-		} else {
-			panic(fmt.Sprintf("got an unexpected rewriteValue type: %T", trans.Rewrite))
-		}
+		value = resolveObject(trans.Rewrite, ctx)
 	}
 
 	// 4: rewriteKey, replace key if need be

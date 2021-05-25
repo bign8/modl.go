@@ -73,7 +73,6 @@ var skip = map[string]bool{
 	"ObjectUnpacker-01": true,
 	"ObjectUnpacker-04": true,
 	"ObjectUnpacker-07": true,
-	"ObjectUnpacker-10": true, // assign key + rewrite value
 }
 
 func TestUnpacker(t *testing.T) {
