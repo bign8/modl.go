@@ -8,19 +8,32 @@ import (
 )
 
 type UnpackerTest struct {
-	ID     string
-	Input  json.RawMessage
-	Subs   Substitution
-	Trans  map[string]Transform
-	Output json.RawMessage
-	Skip   bool
+	ID        string
+	Input     json.RawMessage
+	Subs      Substitution
+	Trans     map[string]Transform
+	TransFile string `json:"trans_file"`
+	Output    json.RawMessage
+	Skip      bool
 }
 
 func (test *UnpackerTest) Run(t *testing.T) {
+	must := func(err error) {
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
 	if testing.Short() && test.Skip {
 		t.Skip("manually disabled test")
 	}
 	u := &Unpacker{}
+	if len(test.TransFile) != 0 {
+		bits, err := ioutil.ReadFile(test.TransFile)
+		must(err)
+		test.Trans, err = ParseTransforms(bits)
+		must(err)
+	}
 	if len(test.Trans) != 0 {
 		u.Transforms = test.Trans
 		// fmt.Printf("Got Transforms: %v\n", u.Transforms)
@@ -52,7 +65,18 @@ func (test UnpackerTest) out() []byte {
 }
 
 var skip = map[string]bool{
-	"Unpacker-": true,
+	"all-step-3a-1":     true, // assign key + replace pair?
+	"all-step-3a-2":     true, // assign key + replace...
+	"Supplementary-1":   true, // unexpected bool
+	"Supplementary-2":   true, // % escapes?
+	"Supplementary-3":   true, // unresolved refs
+	"Supplementary-4":   true, // implicit replacePair: null
+	"ObjectUnpacker-01": true,
+	"ObjectUnpacker-04": true,
+	"ObjectUnpacker-06": true, // unexpected bool
+	"ObjectUnpacker-07": true,
+	"ObjectUnpacker-10": true,
+	"ObjectUnpacker-13": true, // unexpected bool
 }
 
 func TestUnpacker(t *testing.T) {

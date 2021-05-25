@@ -1,0 +1,760 @@
+{
+    "@n": {
+        "rewriteValue": "%/compact.@n"
+    },
+    "o": {
+        "rewriteKey": "organisation",
+        "assignKeys": [
+        "n",
+        "s",
+        "c"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.o.name",
+        "name": "%n",
+        "slogan": "%s",
+        "contacts": "%c"
+        }
+    },
+    "p": {
+        "rewriteKey": "person",
+        "assignKeys": [
+        "n",
+        "b",
+        "c"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.p.name",
+        "name": "%n",
+        "bio": "%b",
+        "contacts": "%c"
+        }
+    },
+    "e": {
+        "rewriteKey": "employee",
+        "assignKeys": [
+        "n",
+        "r",
+        "c"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.e.name",
+        "name": "%n",
+        "role": "%r",
+        "contacts": "%c"
+        }
+    },
+    "lc": {
+        "rewriteKey": "location",
+        "assignKeys": [
+        "n",
+        "d",
+        "c"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.lc.name",
+        "name": "%n",
+        "description": "%d",
+        "contacts": "%c"
+        }
+    },
+    "gp": {
+        "rewriteKey": "group",
+        "assignKeys": [
+        "n",
+        "d",
+        "c"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.gp.name",
+        "name": "%n",
+        "description": "%d",
+        "contacts": "%c"
+        }
+    },
+    "dp": {
+        "rewriteKey": "department",
+        "assignKeys": [
+        "n",
+        "d",
+        "c"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.dp.name",
+        "name": "%n",
+        "description": "%d",
+        "contacts": "%c"
+        }
+    },
+    "a": {
+        "rewriteKey": "address",
+        "assignKeys": [
+        "al",
+        "pz",
+        "co",
+        "d"
+        ],
+        "rewriteValue": {
+        "description": "%d",
+        "description_default": "%/subs.locale.a.default",
+        "lines": "%al",
+        "postcode": "%pz",
+        "country": "%co",
+        "method_type": "core",
+        "object_display_name": "%/subs.locale.a.name",
+        "prefix": ""
+        }
+    },
+    "l": {
+        "rewriteKey": "link",
+        "assignKeys": [
+        "@L",
+        "d",
+        "n"
+        ],
+        "rewriteValue": {
+        "@L": "%@L",
+        "description": "%d",
+        "name": "%n",
+        "object_display_name": "Link"
+        }
+    },
+    "fb": {
+        "rewriteKey": "facebook",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.fb.name",
+        "description_default": "%/subs.locale.fb.default",
+        "description": "%d",
+        "prefix": "https://www.facebook.com/",
+        "method_type": "third_party",
+        "controller": "facebook.com",
+        "value": "%v"
+        }
+    },
+    "g": {
+        "rewriteKey": "gps",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.g.name",
+        "description_default": "%/subs.locale.g.default",
+        "description": "%d",
+        "prefix": "",
+        "method_type": "core",
+        "value": "%v"
+        }
+    },
+    "in": {
+        "rewriteKey": "instagram",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.in.name",
+        "description_default": "%/subs.locale.in.default",
+        "description": "%d",
+        "prefix": "https://www.instagram.com/",
+        "method_type": "third_party",
+        "controller": "instagram.com",
+        "value": "%v"
+        }
+    },
+    "li": {
+        "rewriteKey": "linkedin",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.li.name",
+        "description_default": "%/subs.locale.li.default",
+        "description": "%d",
+        "prefix": "https://www.linkedin.com/",
+        "method_type": "third_party",
+        "controller": "linkedin.com",
+        "value": "%v"
+        }
+    },
+    "yt": {
+        "rewriteKey": "youtube",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.yt.name",
+        "description_default": "%/subs.locale.yt.default",
+        "description": "%d",
+        "prefix": "https://www.youtube.com/",
+        "method_type": "third_party",
+        "controller": "youtube.com",
+        "value": "%v"
+        }
+    },
+    "pi": {
+        "rewriteKey": "pinterest",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.pi.name",
+        "description_default": "%/subs.locale.pi.default",
+        "description": "%d",
+        "prefix": "https://www.pinterest.com/",
+        "method_type": "third_party",
+        "controller": "pinterest.com",
+        "value": "%v"
+        }
+    },
+    "tw": {
+        "rewriteKey": "twitter",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.tw.name",
+        "description_default": "%/subs.locale.tw.default",
+        "description": "%d",
+        "prefix": "https://www.twitter.com/",
+        "method_type": "third_party",
+        "controller": "twitter.com",
+        "value": "%v",
+        "value_prefix": "@"
+        }
+    },
+    "t": {
+        "rewriteKey": "telephone",
+        "assignKeys": [
+        "v",
+        "d",
+        "h"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.t.name",
+        "description_default": "%/subs.locale.t.default",
+        "description": "%d",
+        "prefix": "tel:",
+        "method_type": "core",
+        "value": "%v",
+        "hours": "%h"
+        }
+    },
+    "sm": {
+        "rewriteKey": "sms",
+        "assignKeys": [
+        "v",
+        "d",
+        "h"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.sm.name",
+        "description_default": "%/subs.locale.sm.default",
+        "description": "%d",
+        "prefix": "sms:",
+        "method_type": "core",
+        "value": "%v",
+        "hours": "%h"
+        }
+    },
+    "em": {
+        "rewriteKey": "email",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.em.name",
+        "description_default": "%/subs.locale.em.default",
+        "description": "%d",
+        "prefix": "mailto:",
+        "method_type": "core",
+        "value": "%v"
+        }
+    },
+    "fx": {
+        "rewriteKey": "fax",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.fx.name",
+        "description_default": "%/subs.locale.fx.default",
+        "description": "%d",
+        "prefix": "tel:",
+        "method_type": "core",
+        "value": "%v"
+        }
+    },
+    "u": {
+        "rewriteKey": "url",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.u.name",
+        "description_default": "%/subs.locale.u.default",
+        "description": "%d",
+        "prefix": "https://",
+        "method_type": "core",
+        "value": "%v"
+        }
+    },
+    "uu": {
+        "rewriteKey": "unsecure_url",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "%/subs.locale.uu.name",
+        "description_default": "%/subs.locale.uu.default",
+        "description": "%d",
+        "prefix": "http://",
+        "method_type": "core",
+        "value": "%v"
+        }
+    },
+    "av": {
+        "rewriteKey": "available"
+    },
+    "tz": {
+        "rewriteKey": "time_zone_location"
+    },
+    "i": {
+        "rewriteKey": "introduction"
+    },
+    "ac": {
+        "rewriteKey": "access"
+    },
+    "aa": {
+        "rewriteKey": "android-app",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.aa.name",
+        "description_default": "locale.aa.default",
+        "prefix": "https://play.google.com/store/apps/details?id=",
+        "method_type": "third_party",
+        "controller": "play.google.com"
+        }
+    },
+    "as": {
+        "rewriteKey": "ios-app",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.as.name",
+        "description_default": "locale.as.default",
+        "prefix": "https://itunes.apple.com/app/",
+        "method_type": "third_party",
+        "controller": "apps.apple.com"
+        }
+    },
+    "bt": {
+        "rewriteKey": "baidu_tieba",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.bt.name",
+        "description_default": "locale.bt.default",
+        "prefix": "https://tieba.baidu.com/",
+        "method_type": "third_party",
+        "controller": "tieba.baidu.com"
+        }
+    },
+    "fs": {
+        "rewriteKey": "foursquare",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.fs.name",
+        "description_default": "locale.fs.default",
+        "prefix": "https://www.foursquare.com/",
+        "method_type": "third_party",
+        "controller": "foursquare.com"
+        }
+    },
+    "ft": {
+        "rewriteKey": "facetime",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.ft.name",
+        "description_default": "locale.ft.default",
+        "prefix": "facetime://",
+        "method_type": "third_party",
+        "controller": "facetime@apple.com"
+        }
+    },
+    "gh": {
+        "rewriteKey": "github",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.gh.name",
+        "description_default": "locale.gh.default",
+        "prefix": "https://www.github.com/",
+        "method_type": "third_party",
+        "controller": "github.com"
+        }
+    },
+    "im": {
+        "rewriteKey": "imessage",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.im.name",
+        "description_default": "locale.im.default",
+        "prefix": "imessage://",
+        "method_type": "third_party",
+        "controller": "imessage@apple.com"
+        }
+    },
+    "kk": {
+        "rewriteKey": "kik",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.kk.name",
+        "description_default": "locale.kk.default",
+        "prefix": "https://www.kik.com/u/",
+        "method_type": "third_party",
+        "controller": "kik.com"
+        }
+    },
+    "ln": {
+        "rewriteKey": "line",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.ln.name",
+        "description_default": "locale.ln.default",
+        "prefix": "line://",
+        "method_type": "third_party",
+        "controller": "line.me"
+        }
+    },
+    "md": {
+        "rewriteKey": "medium",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.md.name",
+        "description_default": "locale.md.default",
+        "prefix": "https://www.medium.com/",
+        "method_type": "third_party",
+        "controller": "medium.com"
+        }
+    },
+    "pr": {
+        "rewriteKey": "periscope",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.pr.name",
+        "description_default": "locale.pr.default",
+        "prefix": "https://www.periscope.tv/",
+        "method_type": "third_party",
+        "controller": "periscope.tv"
+        }
+    },
+    "qq": {
+        "rewriteKey": "qq",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.qq.name",
+        "description_default": "locale.qq.default",
+        "prefix": "https://www.qq.com/",
+        "method_type": "third_party",
+        "controller": "qq.com"
+        }
+    },
+    "qz": {
+        "rewriteKey": "qzone",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.qz.name",
+        "description_default": "locale.qz.default",
+        "prefix": "https://www.qzone.com/",
+        "method_type": "third_party",
+        "controller": "qzone.com"
+        }
+    },
+    "rd": {
+        "rewriteKey": "reddit",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.rd.name",
+        "description_default": "locale.rd.default",
+        "prefix": "https://www.reddit.com/r/",
+        "method_type": "third_party",
+        "controller": "reddit.com"
+        }
+    },
+    "rn": {
+        "rewriteKey": "renren",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.rn.name",
+        "description_default": "locale.rn.default",
+        "prefix": "https://www.renren.com/",
+        "method_type": "third_party",
+        "controller": "renren.com"
+        }
+    },
+    "sc": {
+        "rewriteKey": "soundcloud",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.sc.name",
+        "description_default": "locale.sc.default",
+        "prefix": "https://www.soundcloud.com/",
+        "method_type": "third_party",
+        "controller": "soundcloud.com"
+        }
+    },
+    "sk": {
+        "rewriteKey": "skype",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.sk.name",
+        "description_default": "locale.sk.default",
+        "prefix": "skype:",
+        "method_type": "third_party",
+        "controller": "skype.com"
+        }
+    },
+    "sr": {
+        "rewriteKey": "swarm",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.sr.name",
+        "description_default": "locale.sr.default",
+        "prefix": "https://www.swarmapp.com/",
+        "method_type": "third_party",
+        "controller": "swarmapp.com"
+        }
+    },
+    "sn": {
+        "rewriteKey": "snapchat",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.sn.name",
+        "description_default": "locale.sn.default",
+        "prefix": "snapchat://add/",
+        "method_type": "third_party",
+        "controller": "snapchat.com"
+        }
+    },
+    "sw": {
+        "rewriteKey": "sina-weibo",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.sw.name",
+        "description_default": "locale.sw.default",
+        "prefix": "https://www.weibo.com/",
+        "method_type": "third_party",
+        "controller": "weibo.com"
+        }
+    },
+    "tb": {
+        "rewriteKey": "tumblr",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.tb.name",
+        "description_default": "locale.tb.default",
+        "prefix": "https://.tumblr.com/",
+        "method_type": "third_party",
+        "controller": "tumblr.com"
+        }
+    },
+    "tl": {
+        "rewriteKey": "telegram",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.tl.name",
+        "description_default": "locale.tl.default",
+        "prefix": "https://www.telegram.me/",
+        "method_type": "third_party",
+        "controller": "telegram.com"
+        }
+    },
+    "to": {
+        "rewriteKey": "twoo",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.to.name",
+        "description_default": "locale.to.default",
+        "prefix": "https://www.twoo.com/",
+        "method_type": "third_party",
+        "controller": "twoo.com"
+        }
+    },
+    "vb": {
+        "rewriteKey": "viber",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.vb.name",
+        "description_default": "locale.vb.default",
+        "prefix": "https://www.viber.com/",
+        "method_type": "third_party",
+        "controller": "viber.com"
+        }
+    },
+    "vk": {
+        "rewriteKey": "vkontakte",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.vk.name",
+        "description_default": "locale.vk.default",
+        "prefix": "https://www.vk.com/",
+        "method_type": "third_party",
+        "controller": "vk.com"
+        }
+    },
+    "vm": {
+        "rewriteKey": "vimeo",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.vm.name",
+        "description_default": "locale.vm.default",
+        "prefix": "https://www.vimeo.com/",
+        "method_type": "third_party",
+        "controller": "vimeo.com"
+        }
+    },
+    "wa": {
+        "rewriteKey": "whatsapp",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.wa.name",
+        "description_default": "locale.wa.default",
+        "prefix": "whatsapp://",
+        "method_type": "third_party",
+        "controller": "whatsapp.com"
+        }
+    },
+    "wc": {
+        "rewriteKey": "wechat",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.wc.name",
+        "description_default": "locale.wc.default",
+        "prefix": "https://www.wechat.com/",
+        "method_type": "third_party",
+        "controller": "wechat.com"
+        }
+    },
+    "xi": {
+        "rewriteKey": "xing",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.xi.name",
+        "description_default": "locale.xi.default",
+        "prefix": "https://www.xing.com/",
+        "method_type": "third_party",
+        "controller": "xing.com"
+        }
+    },
+    "yy": {
+        "rewriteKey": "yy",
+        "assignKeys": [
+        "v",
+        "d"
+        ],
+        "rewriteValue": {
+        "object_display_name": "locale.yy.name",
+        "description_default": "locale.yy.default",
+        "prefix": "https://www.yy.com/",
+        "method_type": "third_party",
+        "controller": "yy.com"
+        }
+    }
+}
