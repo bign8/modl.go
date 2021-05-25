@@ -374,6 +374,7 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 		}
 		newValue := make(map[string]interface{}, len(list))
 		for i, v := range list {
+			newValue[trans.Assign[i]] = v                 // assign for future ctx logic
 			state.transform(newValue, trans.Assign[i], v) // recurse to assign key/values
 		}
 		value = newValue

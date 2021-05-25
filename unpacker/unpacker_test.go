@@ -65,8 +65,6 @@ func (test UnpackerTest) out() []byte {
 }
 
 var skip = map[string]bool{
-	"all-step-3a-1":     true, // assign key + replace pair?
-	"all-step-3a-2":     true, // assign key + replace...
 	"Supplementary-2":   true, // % escapes?
 	"Supplementary-3":   true, // unresolved refs
 	"Supplementary-4":   true, // implicit replacePair: null
