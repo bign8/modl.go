@@ -36,11 +36,13 @@ type Transform struct {
 
 func (t *Transform) UnmarshalJSON(bits []byte) error {
 	// TODO: emit errors if the types are wrong
+	var flag bool
 	trans := make(map[string]interface{}) // todo: map string to json.RawMessage?
 	if err := json.Unmarshal(bits, &trans); err != nil {
 		return err
 	}
 	if assign, ok := trans["assignKeys"].([]interface{}); ok {
+		flag = true
 		t.Assign = make([]string, 0, len(assign))
 		for _, a := range assign {
 			t.Assign = append(t.Assign, a.(string))
@@ -48,14 +50,17 @@ func (t *Transform) UnmarshalJSON(bits []byte) error {
 		delete(trans, "assignKeys")
 	}
 	if items, ok := trans["arrayItems"].(string); ok {
+		flag = true
 		t.Items = items
 		delete(trans, "arrayItems")
 	}
 	if key, ok := trans["rewriteKey"].(string); ok {
+		flag = true
 		t.Key = key
 		delete(trans, "rewriteKey")
 	}
 	if replace, ok := trans["replacePair"]; ok {
+		flag = true
 		if replace == nil {
 			t.ReturnNull = true
 		} else if str, ok := replace.(string); ok {
@@ -66,6 +71,7 @@ func (t *Transform) UnmarshalJSON(bits []byte) error {
 		delete(trans, "replacePair")
 	}
 	if rewrite, ok := trans["rewriteValue"]; ok {
+		flag = true
 		if rewrite == nil {
 			t.RewriteNull = true
 		} else {
@@ -74,12 +80,16 @@ func (t *Transform) UnmarshalJSON(bits []byte) error {
 		delete(trans, "rewriteValue")
 	}
 	if len(trans) > 0 {
+		flag = true
 		t.Nesting = make(map[string]Transform)
 		bits, err := json.Marshal(trans)
 		if err != nil {
 			return err
 		}
 		return json.Unmarshal(bits, &t.Nesting)
+	}
+	if !flag {
+		t.ReturnNull = true // if nothing else is set, assume returnNull is true
 	}
 	return nil
 }
@@ -385,6 +395,12 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 				m[k] = nil
 			}
 		}
+	} else if len(trans.Assign) != 0 {
+		// iff other, assume the value is the firs t key set {fb: "asdf"}
+		value = map[string]interface{}{
+			trans.Assign[0]: value,
+		}
+		// TODO: treat the unset keys as deletions
 	}
 
 	// 1.5: update ctx as necessary

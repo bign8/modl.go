@@ -67,10 +67,9 @@ func (test UnpackerTest) out() []byte {
 var skip = map[string]bool{
 	"Supplementary-2":   true, // % escapes?
 	"Supplementary-3":   true, // unresolved refs
-	"Supplementary-4":   true, // implicit replacePair: null
-	"ObjectUnpacker-01": true,
-	"ObjectUnpacker-04": true,
-	"ObjectUnpacker-07": true,
+	"ObjectUnpacker-01": true, // assignKeys with single value, don't set subsequent properties that only reference unset fields?
+	"ObjectUnpacker-04": true, // same
+	"ObjectUnpacker-07": true, // same
 }
 
 func TestUnpacker(t *testing.T) {
