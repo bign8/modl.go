@@ -108,6 +108,12 @@
         "trans": {"a":{"assignKeys":["a","b","c"],"rewriteValue":"%c"}},
         "output": {"a":"charlie"}
     }, {
+        "id": "Unpacker-19",
+        "desc": "ch11442",
+        "input": {"assign":"a","replace":{"a":"a","b":null},"both":"a"},
+        "trans": {"assign":{"assignKeys":["assign_a","assign_b"]},"replace":{"replacePair":{"replace_a":"%a","replace_b":"%b"}},"both":{"assignKeys":["both_a","both_b"],"replacePair":{"both_a":"%both_a","both_b":"%both_b"}}},
+        "output": {"assign":{"assign_a":"a","assign_b":null},"replace_a":"a","replace_b":null,"both_a":"a","both_b":null}
+    }, {
         "id": "Nested-01",
         "desc": "It should be possible to nest unpacker specs",
         "input": {"test":{"first":{"value":1},"second":{"value":2},"third":{"value":3}}},
@@ -1495,7 +1501,7 @@
         "input": {"@n":1,"?":["tesco"],"o":{"n":"Tesco","s":"Every Little Helps","c":[{"fb":"%0"},{"pi":"%0"}]}},
 		"trans_file": "schema-map.json",
 		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
-        "output": {"@n":1,"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":[{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"tesco"}},{"pinterest":{"object_display_name":"Pinterest","description_default":"View Pinterest board","prefix":"https://www.pinterest.com/","method_type":"third_party","controller":"pinterest.com","value":"tesco"}}]}}
+        "output": {"@n":1,"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":[{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","description":null,"prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"tesco"}},{"pinterest":{"object_display_name":"Pinterest","description_default":"View Pinterest board","description":null,"prefix":"https://www.pinterest.com/","method_type":"third_party","controller":"pinterest.com","value":"tesco"}}]}}
     }, {
         "id": "ObjectUnpacker-02",
         "input": {"@n":1,"o":{"n":"NUM Example Co","s":"Example Strapline","c":[{"t":{"d":"Customer Service","v":"+441270123456"}},{"fb":{"v":"examplefacebook"}},{"in":{"v":"exampleinstagram"}},{"tw":{"v":"exampletwitter"}}]}},
@@ -1513,7 +1519,7 @@
         "input": {"o":{"n":"Tesco","s":"Every Little Helps","c":[{"fb":"test1"},{"pi":"test2"}]}},
 		"trans_file": "schema-map.json",
 		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
-        "output": {"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":[{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"test1"}},{"pinterest":{"object_display_name":"Pinterest","description_default":"View Pinterest board","prefix":"https://www.pinterest.com/","method_type":"third_party","controller":"pinterest.com","value":"test2"}}]}}
+        "output": {"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":[{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","description":null,"prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"test1"}},{"pinterest":{"object_display_name":"Pinterest","description_default":"View Pinterest board","description":null,"prefix":"https://www.pinterest.com/","method_type":"third_party","controller":"pinterest.com","value":"test2"}}]}}
     }, {
         "id": "ObjectUnpacker-05",
         "input": {"@n":1,"o":{"n":"Nemo Finders Ltd","id":"832765467","a":["42 West Wallaby Way,","Sydney,","Australia"],"p":"SN1","co":"OZ","e":"bruce@nemo-finders.oz"}},
@@ -1531,7 +1537,7 @@
         "input": {"o":"tesco"},
 		"trans_file": "schema-map.json",
 		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
-        "output": {"organisation":{"name":"tesco","object_display_name":"Organisation"}}
+        "output": {"organisation":{"object_display_name":"Organisation","name":"tesco","slogan":null,"contacts":null}}
     }, {
         "id": "ObjectUnpacker-08",
         "input": {"p":{"f":"John","l":"Smith","a":20}},

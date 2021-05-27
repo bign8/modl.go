@@ -396,11 +396,14 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 			}
 		}
 	} else if len(trans.Assign) != 0 {
-		// iff other, assume the value is the firs t key set {fb: "asdf"}
+		// iff other, assume the value is the first key set {fb: "asdf"}
 		value = map[string]interface{}{
 			trans.Assign[0]: value,
 		}
-		// TODO: treat the unset keys as deletions
+		// Assign unset keys to be nil
+		for _, v := range trans.Assign[1:] {
+			value.(map[string]interface{})[v] = nil
+		}
 	}
 
 	// 1.5: update ctx as necessary
