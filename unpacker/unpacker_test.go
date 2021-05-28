@@ -76,9 +76,6 @@ func TestUnpacker(t *testing.T) {
 		t.Fatal("Unable to deserialize tests: " + err.Error())
 	}
 	for _, test := range tests {
-		if test.ID == "Supplementary-n8" {
-			continue
-		}
 		test.Skip = skip[test.ID]
 		t.Run(test.ID, test.Run)
 	}

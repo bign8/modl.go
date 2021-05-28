@@ -325,7 +325,24 @@ func resolveString(in string, subz map[string]interface{}) interface{} {
 		if len(word) == 0 {
 			word = "%"
 		} else if x, ok := subz[word]; ok {
-			word = x.(string) // TODO: more type assertions
+			switch y := x.(type) {
+			case string:
+				word = y
+			case float64:
+				word = strconv.FormatFloat(y, 'G', -1, 64)
+			case bool:
+				if y {
+					word = "true"
+				} else {
+					word = "false"
+				}
+			case nil:
+				word = ""
+			case []interface{}, map[string]interface{}:
+				word = "" // NOTE: no idea how we want to conver these typesto strings
+			default:
+				panic(fmt.Sprintf("resolveString: unexpected type %T", x))
+			}
 		} else {
 			word = ""
 		}
