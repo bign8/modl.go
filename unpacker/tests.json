@@ -1482,14 +1482,14 @@
         "output": {"a":"string","b":1,"c":true,"d":"Hello World","e":"Brave New World"}
     }, {
         "id": "Supplementary-2",
-        "desc": "%-prefixes and suffixes",
+        "desc": "%-prefixes and suffixes (NOTE: h expected is different from NUMTechnology/object-unpacker)",
         "input": {"?":["val"],"a":"%0","b":"%0%","c":"x%0","d":"%0 x","e":"x%0%x","f":"x%0%0%x","g":"x%0%%0%x","h":"x%0%%%%0%x","i":"%0 %%0"},
-        "output": {"a":"val","b":"val","c":"xval","d":"val x","e":"xvalx","f":"xval0","g":"xvalvalx","h":"xval%%0%x","i":"val %0"}
+        "output": {"a":"val","b":"val","c":"xval","d":"val x","e":"xvalx","f":"xval0","g":"xvalvalx","h":"xval%valx","i":"val %0"}
     }, {
         "id": "Supplementary-3",
-        "desc": "unresolved references",
+        "desc": "unresolved references (NOTE: h1 and h2 expected is different from NUMTechnology/object-unpacker)",
         "input": {"a1":"%0","b1":"%0%","c1":"x%0","d1":"%0 x","e1":"x%0%x","f1":"x%0%0%x","g1":"x%0%%0%x","h1":"x%0%%%%0%x","i1":"%0 %%0","a2":"%x","b2":"%x%","c2":"x%x","d2":"%x x","e2":"x%x%x","f2":"x%x%x%x","g2":"x%x%%x%x","h2":"x%x%%%%x%x","i2":"%x %%x"},
-        "output": {"a1":null,"b1":null,"c1":"x","d1":" x","e1":"xx","f1":"x0","g1":"xx","h1":"x%%0%x","i1":" %0","a2":null,"b2":null,"c2":"x","d2":" x","e2":"xx","f2":"xx","g2":"xx","h2":"x%%x%x","i2":" %x"}
+        "output": {"a1":null,"b1":null,"c1":"x","d1":" x","e1":"xx","f1":"x0","g1":"xx","h1":"x%x","i1":" %0","a2":null,"b2":null,"c2":"x","d2":" x","e2":"xx","f2":"xx","g2":"xx","h2":"x%x","i2":" %x"}
     }, {
         "id": "Supplementary-4",
         "desc": "remove pairs when `replacePair` is null",
@@ -1497,6 +1497,40 @@
 		"trans": {"foo":{}},
         "output": {}
     }, {
+		"id": "Supplementary-n8",
+		"desc": "test does not exist in NumTechnology/object-unpacker",
+		"input": {
+			"?": [
+			  0,
+			  null,
+			  [],
+			  {},
+			  false
+			],
+			"a": "%0",
+			"b": "==%0%==",
+			"c": "%1",
+			"d": "==%1%==",
+			"e": "%2",
+			"f": "==%2%==",
+			"g": "%3",
+			"h": "==%3%==",
+			"i": "%4",
+			"j": "==%4%=="
+		  },
+		"output": {
+			"a": 0,
+			"b": "==0==",
+			"c": null,
+			"d": "====",
+			"e": [],
+			"f": "====",
+			"g": {},
+			"h": "====",
+			"i": false,
+			"j": "==false=="
+		  }
+	}, {
         "id": "ObjectUnpacker-01",
         "input": {"@n":1,"?":["tesco"],"o":{"n":"Tesco","s":"Every Little Helps","c":[{"fb":"%0"},{"pi":"%0"}]}},
 		"trans_file": "schema-map.json",

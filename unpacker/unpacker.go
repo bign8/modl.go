@@ -297,28 +297,51 @@ func resolveObject(o interface{}, ctx map[string]interface{}) interface{} {
 }
 
 func resolveString(in string, subz map[string]interface{}) interface{} {
-	// NOTE: state is not used, but is left as a potential memory optimization
-	// (array of contexts or logic to switch between allowing viariadic or not)
-	for k, v := range subz {
-		key := "%" + k
-		if in == key || in == key+"%" {
-			return v
-		}
-		if s, ok := v.(string); ok {
-			if strings.HasSuffix(in, key) {
-				in = strings.TrimSuffix(in, key) + s
-			}
-			if strings.Contains(in, key+" ") {
-				in = strings.Replace(in, key+" ", s+" ", -1)
-			}
-			if strings.Contains(in, key+"%") {
-				in = strings.Replace(in, key+"%", s, -1)
-			}
-		}
+	first := strings.IndexByte(in, '%')
+	if len(in) == 0 || first == -1 {
+		return in // noop if nothing can be a reference here
 	}
-	// assume some part of the full thing was a key (likely a bug, need a beter way to do this)
-	if strings.HasPrefix(in, "%") {
-		return nil
+
+	// Check if the whole things is a reference real quick
+	if clean := strings.TrimSuffix(in[1:], "%"); first == 0 && !strings.ContainsAny(clean, " %") {
+		return subz[clean]
+	}
+
+	// Loop through one % at a time, searching for escape characters and closing percent symbols
+	for first >= 0 && first < len(in) {
+
+		// find the next excape character and set the slice so in[first:next] is the string that needs replaced
+		next := strings.IndexAny(in[first+1:], " %")
+		if next < 0 {
+			next = len(in)
+		} else if in[first+1+next] == '%' {
+			next += first + 2
+		} else {
+			next += first + 1
+		}
+
+		// See what the replacement string looks like
+		word := strings.TrimSuffix(in[first+1:next], "%")
+		if len(word) == 0 {
+			word = "%"
+		} else if x, ok := subz[word]; ok {
+			word = x.(string) // TODO: more type assertions
+		} else {
+			word = ""
+		}
+
+		// replace the section in the resulting string
+		in = in[:first] + word + in[next:]
+		next = first + len(word)
+
+		// what's next?
+		if next > len(in)-1 {
+			break
+		}
+		first = strings.IndexByte(in[next:], '%')
+		if first >= 0 {
+			first += next
+		}
 	}
 	return in
 }

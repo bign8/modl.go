@@ -64,10 +64,7 @@ func (test UnpackerTest) out() []byte {
 	return bits
 }
 
-var skip = map[string]bool{
-	"Supplementary-2": true, // % escapes? (stronger string parsing)
-	"Supplementary-3": true, // unresolved refs (stronger string parsing)
-}
+var skip = map[string]bool{}
 
 func TestUnpacker(t *testing.T) {
 	jsonTests, err := ioutil.ReadFile("tests.json")
@@ -79,6 +76,9 @@ func TestUnpacker(t *testing.T) {
 		t.Fatal("Unable to deserialize tests: " + err.Error())
 	}
 	for _, test := range tests {
+		if test.ID == "Supplementary-n8" {
+			continue
+		}
 		test.Skip = skip[test.ID]
 		t.Run(test.ID, test.Run)
 	}
