@@ -1,0 +1,1618 @@
+[
+    {
+        "id": "Unpacker-01",
+        "desc": "Arrays without transform should remain as arrays",
+        "input": ["alpha", "bravo", "charlie"],
+        "output": ["alpha", "bravo", "charlie"]
+    }, {
+        "id": "Unpacker-02",
+        "desc": "It should retain pairs that aren't transformed",
+        "input": {"a": "alpha", "b": "bravo"},
+        "trans": {"b": {"rewriteValue": "bacon"}},
+        "output": {"a": "alpha", "b": "bacon"}
+    }, {
+        "id": "Unpacker-03",
+        "desc": "When a key references an object that doesn't exist it should print null",
+        "input": {"a": "%a"},
+        "output": {"a": null}
+    }, {
+        "id": "Unpacker-04",
+        "desc": "It should print references in an array at the root",
+        "input": ["%0"],
+        "output": [null]
+    }, {
+        "id": "Unpacker-05",
+        "desc": "It should retain map structure when referencing an object that doesn't exist",
+        "input": {"a": "%0"},
+        "output": {"a": null}
+    }, {
+        "id": "Unpacker-06",
+        "desc": "You should be able to rewrite values with pass throughs",
+        "input": {"a": {"b": {"c": {"test": 1}}}},
+        "trans": {"a": {"rewriteValue": "%/compact.a.b"}},
+        "output": {"a": {"c": {"test": 1}}}
+    }, {
+        "id": "Unpacker-07",
+        "desc": "It should not reference the value of the first non-? key by char position",
+        "input": {"?":["yo","mtv","raps"],"a":"alpha"},
+        "trans": {"a":{"rewriteValue":{"that":"%0"}}},
+        "subs": {"a":"ASåÍa"},
+        "output": {"a":{"that":null}}
+    }, {
+        "id": "Unpacker-08",
+        "desc": "It should retain pairs specified before the pair being replaced",
+        "input": {"a":"alpha","b":"bravo","c":"charlie"},
+        "trans": {"b":{"replacePair":{"b1":"bravo","b2":"bacon"}}},
+        "output": {"a":"alpha","b1":"bravo","b2":"bacon","c":"charlie"}
+    }, {
+        "id": "Unpacker-09",
+        "desc": "It should remove the pair when the value of replacePair is null",
+        "input": {"a":"alpha","b":"bravo","c":"charlie"},
+        "trans": {"b":{"replacePair":null}},
+        "output": {"a":"alpha","c":"charlie"}
+    }, {
+        "id": "Unpacker-10",
+        "desc": "It should be possible to rewriteValue as null",
+        "input": {"a":"alpha","b":"bravo","c":"charlie"},
+        "trans": {"b":{"rewriteValue":null}},
+        "output": {"a":"alpha","b":null,"c":"charlie"}
+    }, {
+        "id": "Unpacker-11",
+        "desc": "It should be possible to rewriteValue to a map with a pair with a null value",
+        "input": {"a":"alpha","b":"bravo","c":"charlie"},
+        "trans": {"b":{"rewriteValue":{"a":null}}},
+        "output": {"a":"alpha","b":{"a":null},"c":"charlie"}
+    }, {
+        "id": "Unpacker-12",
+        "desc": "It should be possible to replacePair with a pair with a value of null",
+        "input": {"a":"alpha","b":"bravo","c":"charlie"},
+        "trans": {"b":{"replacePair":{"test":null}}},
+        "output": {"a":"alpha","test":null,"c":"charlie"}
+    }, {
+        "id": "Unpacker-13",
+        "desc": "Labels shoudld not clash - ch10991",
+        "input": {"?":["abccompany","+4412345678"],"n":"ABC Company Ltd","t":[{"l":"Accounts","n":"%1%90"},{"l":"Customer Service","n":"%1%89"}],"tw":"/%0","i":"/%0%pics"},
+        "trans": {"n":{"rewriteKey":"name"},"t":{"rewriteKey":"telephone","arrayItems":"tel"},"tel":{"l":{"rewriteKey":"label"},"n":{"rewriteKey":"number"}},"tw":{"rewriteKey":"twitter"},"i":{"rewriteKey":"instagram"}},
+        "subs": {"ac":"Accounts","cs":"Customer Service"},
+        "output": {"name":"ABC Company Ltd","telephone":[{"tel":{"label":"Accounts","number":"+441234567890"}},{"tel":{"label":"Customer Service","number":"+441234567889"}}],"twitter":"/abccompany","instagram":"/abccompanypics"}
+    }, {
+        "id": "Unpacker-14",
+        "desc": "Can rewrite keys with nested mappings",
+        "input": {"?":["abccompany","+4412345678"],"n":"ABC Company Ltd","t":[{"l":"%ac","d":"%1%90"},{"l":"%cs","d":"%1%89"}],"tw":"/%0","i":"/%0%pics"},
+        "trans": {"n":{"rewriteKey":"name"},"t":{"arrayItems":"tel"},"tel":{"replacePair":"%self","l":{"rewriteKey":"label"},"d":{"rewriteKey":"digits"}},"tw":{"rewriteKey":"twitter"},"i":{"rewriteKey":"instagram"}},
+        "subs": {"ac":"Accounts","cs":"Customer Service"},
+        "output": {"name":"ABC Company Ltd","t":[{"label":"Accounts","digits":"+441234567890"},{"label":"Customer Service","digits":"+441234567889"}],"twitter":"/abccompany","instagram":"/abccompanypics"}
+    }, {
+        "id": "Unpacker-15",
+        "desc": "ch11021",
+        "input": {"o":["Widget Company Ltd","Making the best widgets","https://www.widgetcompany.com",[{"n":"Jane Smith","p":"Chief Executive Officer","b":"https://www.widgetcompany.com/team/janesmith","l":"janesmith","t":"janesmithwidgets"},{"n":"John Wilson","p":"Chief Technology Officer","b":"https://www.widgetcompany.com/team/johnwilson","l":"johnwilson","t":"jono"},{"n":"Dashna Anand","p":"Chief Marketing Officer","b":"https://www.widgetcompany.com/team/dashnaanand","l":"dashnaanand","t":"dashnaanand"}]]},
+        "trans": {"o":{"rewriteKey":"organisation","assignKeys":["name","strapline","website","employees"]},"n":{"rewriteKey":"name"},"p":{"rewriteKey":"position"},"b":{"rewriteKey":"bio"},"l":{"rewriteKey":"linkedin","rewriteValue":"https://www.linkedin.com/in/%self"},"t":{"rewriteKey":"twitter","rewriteValue":"https://www.twitter.com/%self"}},
+        "subs": {"ac":"Accounts","cs":"Customer Service"},
+        "output": {"organisation":{"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}}
+    }, {
+        "id": "Unpacker-16",
+        "desc": "ch11325",
+        "input": {"t":"me"},
+        "trans": {"t":{"rewriteKey":"twitter","rewriteValue":{"cta":"Follow on Twitter","url":"twitter.com/%self"}}},
+        "output": {"twitter":{"cta":"Follow on Twitter","url":"twitter.com/me"}}
+    }, {
+        "id": "Unpacker-17",
+        "desc": "ch11326",
+        "input": {"a":{"b":{"c":1}}},
+        "trans": {"a":{"rewriteValue":"%b"}},
+        "output": {"a":{"c":1}}
+    }, {
+        "id": "Unpacker-18",
+        "desc": "ch11326",
+        "input": {"a":["alpha","bravo","charlie"]},
+        "trans": {"a":{"assignKeys":["a","b","c"],"rewriteValue":"%c"}},
+        "output": {"a":"charlie"}
+    }, {
+        "id": "Unpacker-19",
+        "desc": "ch11442",
+        "input": {"assign":"a","replace":{"a":"a","b":null},"both":"a"},
+        "trans": {"assign":{"assignKeys":["assign_a","assign_b"]},"replace":{"replacePair":{"replace_a":"%a","replace_b":"%b"}},"both":{"assignKeys":["both_a","both_b"],"replacePair":{"both_a":"%both_a","both_b":"%both_b"}}},
+        "output": {"assign":{"assign_a":"a","assign_b":null},"replace_a":"a","replace_b":null,"both_a":"a","both_b":null}
+    }, {
+        "id": "Nested-01",
+        "desc": "It should be possible to nest unpacker specs",
+        "input": {"test":{"first":{"value":1},"second":{"value":2},"third":{"value":3}}},
+        "trans": {"test":{"first":{"rewriteKey":"alpha","value":{"rewriteKey":"first"}},"second":{"rewriteKey":"beta","value":{"rewriteKey":"second"}},"third":{"rewriteKey":"gamma","value":{"rewriteKey":"third"}}}},
+        "output": {"test":{"alpha":{"first":1},"beta":{"second":2},"gamma":{"third":3}}}
+    }, {
+        "id": "Nested-02",
+        "desc": "It should be possible to nest unpacker specs",
+        "input": {"test":{"this":1}},
+        "trans": {"test":{"this":{"rewriteKey":"that"}}},
+        "output": {"test":{"that":1}}
+    }, {
+        "id": "Nested-03",
+        "desc": "It should be possible to nest unpacker specs",
+        "input": {"test":{"first":{"value1":"a","value2":"b"},"second":{"value":2},"third":{"value":3}}},
+        "trans": {"test":{"rewriteKey":"TEST","first":{"rewriteKey":"alpha","value1":{"rewriteKey":"v1"},"value2":{"rewriteKey":"v2"}},"second":{"rewriteKey":"beta","value":{"rewriteKey":"second"}},"third":{"rewriteKey":"gamma","value":{"rewriteKey":"third"}}}},
+        "output": {"TEST":{"alpha":{"v1":"a","v2":"b"},"beta":{"second":2},"gamma":{"third":3}}}
+    }, {
+        "id": "rewriteKey",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"f": 1},
+        "trans": {"f": {"rewriteKey": "foo"}},
+        "output": {"foo": 1}
+    }, {
+        "id": "rewriteValue",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"foo": 1},
+        "trans": {"foo": {"rewriteValue" : { "x" : "%self", "y" : 2 }}},
+        "output": {"foo": {"x": 1, "y": 2}}
+    }, {
+        "id": "replacePair",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"f": 1},
+        "trans": {"f": {"replacePair": {"x": "%self", "y": 2, "z": 3}}},
+        "output": {"x" : 1, "y" : 2, "z" : 3}
+    }, {
+        "id": "subs",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"foo": "%var"},
+        "subs": {"var": 1},
+        "output": {"foo": 1}
+    }, {
+        "id": "assignKeys",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"phonetic": ["alpha", "bravo", "charlie"]},
+        "trans": {"phonetic": {"assignKeys": ["a", "b", "c"]}},
+        "output": {"phonetic": {"a": "alpha", "b": "bravo", "c": "charlie"}}
+    }, {
+        "id": "arrayItems",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"employees": [["Jane Smith", "CEO"], ["Dashna Anand", "CMO"]]},
+        "trans": {"employees": {"arrayItems": "employee"},"employee": {"assignKeys": ["name", "position"],"replacePair": {"name": "%name", "position": "%position"}}},
+        "output": {"employees": [{"name": "Jane Smith", "position": "CEO"},{"name": "Dashna Anand", "position": "CMO"}]}
+    }, {
+        "id": "noop",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {"employees": [{"name": "Jane Smith", "position": "CEO"},{"name": "Dashna Anand", "position": "CMO"}]},
+        "output": {"employees": [{"name": "Jane Smith", "position": "CEO"},{"name": "Dashna Anand", "position": "CMO"}]}
+    }, {
+        "id": "variable-index-1",
+        "desc": "Source: https://www.unpacker.uk/specification#variable-index",
+        "input": {"?": [1], "a": "%0%"},
+        "output": {"a": 1}
+    }, {
+        "id": "variable-index-2",
+        "desc": "Source: https://www.unpacker.uk/specification#variable-index",
+        "input": {"?": [["a", "b"], {"a": "alpha", "b": "bravo"}], "x": "%0%", "y": "%1%"},
+        "output": {"x": ["a", "b"], "y": {"a": "alpha", "b": "bravo"}}
+    }, {
+        "id": "variable-index-3",
+        "desc": "Source: https://www.unpacker.uk/specification#variable-index",
+        "input": {"?": [["a", "b"], {"a": "alpha", "b": "bravo"}], "x": "%0.0%", "y": "%1.a%"},
+        "output": {"x": "a", "y": "alpha"}
+    }, {
+        "id": "sub-1",
+        "desc": "Source: https://www.unpacker.uk/specification#substitution-object",
+        "input": {"this": "%a%", "that": "%b%"},
+        "subs": {"a": 1, "b": 2},
+        "output": {"this": 1, "that": 2}
+    }, {
+        "id": "sub-2",
+        "desc": "Source: https://www.unpacker.uk/specification#substitution-object",
+        "input": {"this": "%a.x%", "that": "%b.0%"},
+        "subs": {"a": {"x": "xray", "y": "yankee"}, "b": [1, 2]},
+        "output": {"this": "xray", "that": 1}
+    }, {
+        "id": "trans-1",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {"t": 1,"u": {"t": 2},"v": {"w": {"t": 3}}},
+        "trans": {"t": {"rewriteKey": "testing"}},
+        "output": {"testing": 1,"u": {"testing": 2},"v": {"w": {"testing": 3}}}
+    }, {
+        "id": "trans-2",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {
+			"t": 1,
+			"u": {"t": 2},
+			"v": {"w": {"t": 3}}
+		  },
+        "trans": {
+			"t": {"rewriteKey": "testing"},
+			"u": {"t": {"rewriteKey": "testing2"}},
+			"v": {"w": {"t": {"rewriteKey": "testing3"}}}
+		  },
+        "output": {
+			"testing": 1,
+			"u": {"testing2": 2},
+			"v": {"w": {"testing3": 3}}
+		  }
+    }, {
+        "id": "trans-3",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {"t": 1},
+        "trans": {"t": {"rewriteKey": "testing"}},
+        "output": {"testing": 1}
+    }, {
+        "id": "trans-4",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {"t": "me"},
+        "trans": {
+			"t": {
+			  "rewriteKey": "twitter",
+			  "rewriteValue": "twitter.com/%self"
+			}
+		  },
+        "output": {"twitter": "twitter.com/me"}
+    }, {
+        "id": "trans-5",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {"t": "me"},
+        "trans": {
+			"t": {
+			  "rewriteKey": "twitter",
+			  "rewriteValue": {
+				"cta": "Follow on Twitter",
+				"url": "twitter.com/%self"
+			  }
+			}
+		  },
+        "output": {
+			"twitter": {
+			  "cta": "Follow on Twitter",
+			  "url": "twitter.com/me"
+			}
+		  }
+    }, {
+        "id": "trans-6",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {"t": "me"},
+        "trans": {
+			"t": {
+			  "replacePair": {
+				"cta": "Follow on Twitter",
+				"url": "twitter.com/%self"
+			  }
+			}
+		  },
+        "output": {"cta": "Follow on Twitter", "url": "twitter.com/me"}
+    }, {
+        "id": "trans-7",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {"phonetic": ["alpha", "bravo", "charlie"]},
+        "trans": {"phonetic": {"assignKeys": ["a", "b", "c"]}},
+        "output": {
+			"phonetic": {
+			  "a": "alpha",
+			  "b": "bravo",
+			  "c": "charlie"
+			}
+		  }
+    }, {
+        "id": "trans-8",
+        "desc": "Source: https://www.unpacker.uk/specification#transformation-object",
+        "input": {
+			"employees": [
+			  ["Jane Smith", "CEO"],
+			  ["Dashna Anand", "CMO"]
+			]
+		  },
+        "trans": {
+			"employees": {
+			  "arrayItems": "employee"
+			},
+			"employee": {
+			  "assignKeys": [
+				"name",
+				"position"
+			  ],
+			  "replacePair": {
+				"name": "%name",
+				"position": "%position"
+			  }
+			}
+		  },
+        "output": {"employees": [
+            {"name": "Jane Smith", "position": "CEO"},
+            {"name": "Dashna Anand", "position": "CMO"}
+          ]}
+    }, {
+        "id": "ref-1",
+        "desc": "Source: https://www.unpacker.uk/specification#referencing",
+        "input": {
+			"?": ["test"],
+			"a": "%0%",
+			"b": "this is a %0",
+			"c": "this is another %0 of referencing",
+			"d": "once again %0%ing it"
+		  },
+        "output": {
+			"a": "test",
+			"b": "this is a test",
+			"c": "this is another test of referencing",
+			"d": "once again testing it"
+		  }
+    }, {
+        "id": "ref-2",
+        "desc": "Source: https://www.unpacker.uk/specification#referencing",
+        "input": {
+			"?": [
+			  ["a", "b"],
+			  {"a": "alpha", "b": "bravo"}
+			],
+			"x": "%0.0",
+			"y": "%1.a",
+			"z": "%letters.0"
+		  },
+        "subs": {"letters": ["a", "b"]},
+        "output": {"x": "a", "y": "alpha", "z": "a"}
+    }, {
+        "id": "ref-3",
+        "desc": "Source: https://www.unpacker.uk/specification#referencing",
+        "input": {"a": {"b": {"c": 1}}},
+        "trans": {"a": {"rewriteValue": "%b.c"}},
+        "output": {"a": 1}
+    }, {
+        "id": "ref-4",
+        "desc": "Source: https://www.unpacker.uk/specification#referencing",
+        "input": {
+			"a": ["alpha", "bravo", "charlie"]
+		  },
+        "trans": {
+			"a": {
+			  "assignKeys": ["a", "b", "c"],
+			  "rewriteValue": "%c"
+			}
+		  },
+        "output": {"a": "charlie"}
+    }, {
+        "id": "ref-5",
+        "desc": "Source: https://www.unpacker.uk/specification#referencing",
+        "input": {"a": 1, "b": 2, "c": 3},
+        "trans": {
+			"a": {"rewriteValue": "%/compact.c"},
+			"b": {"rewriteValue": "%/subs.x"}
+		  },
+        "subs": {"x": 4},
+        "output": {"a": 3, "b": 4, "c": 3}
+    }, {
+        "id": "playground-1",
+        "desc": "Source: https://www.unpacker.uk/playground?e=1",
+        "input": {
+			"?": ["abccompany", "+4412345678"],
+			"c": "ABC Company Ltd",
+			"t": [
+			  {"l": "%ac", "n": "%1%90"},
+			  {"l": "%cs", "n": "%1%89"}
+			],
+			"tw": "/%0",
+			"i": "/%0%pics"
+		  },
+        "trans": {
+			"c": {"rewriteKey": "coname"},
+			"t": {"rewriteKey": "telephone"},
+			"l": {"rewriteKey": "label"},
+			"n": {"rewriteKey": "number"},
+			"tw": {"rewriteKey": "twitter"},
+			"i": {"rewriteKey": "instagram"}
+		  },
+        "subs": {"cs": "Customer Service", "ac": "Accounts"},
+        "output": {
+			"coname": "ABC Company Ltd",
+			"telephone": [
+			  {"label": "Accounts", "number": "+441234567890"},
+			  {"label": "Customer Service", "number": "+441234567889"}
+			],
+			"twitter": "/abccompany",
+			"instagram": "/abccompanypics"
+		  }
+    }, {
+        "id": "playground-2",
+        "desc": "Source: https://www.unpacker.uk/playground?e=2",
+        "input": {
+			"?": ["https://www.widgetcompany.com", "team", "janesmith", "johnwilson", "dashnaanand"],
+			"o": [
+			  "Widget Company Ltd",
+			  "Making the best widgets",
+			  "%0",
+			  [
+				["Jane Smith", "%ceo", "%0%/%1%/%2", "%2", "%2%widgets"],
+				["John Wilson", "%cto", "%0%/%1%/%3", "%3", "jono"],
+				["Dashna Anand", "%cmo", "%0%/%1%/%4", "%4", "%4"]
+			  ]
+			]
+		  },
+        "trans": {
+			"o": {
+			  "assignKeys": ["n", "s", "w", "e"],
+			  "replacePair": {
+				"name": "%n",
+				"strapline": "%s",
+				"website": "%w",
+				"employees": "%e"
+			  }
+			},
+			"em": {
+			  "replacePair": {
+				"name": "%n",
+				"position": "%p",
+				"bio": "%b",
+				"linkedin": "https://www.linkedin.com/in/%l",
+				"twitter": "https://www.twitter.com/%t"
+			  }
+			}
+		  },
+        "subs": {
+			"ceo": "Chief Executive Officer",
+			"cto": "Chief Technology Officer",
+			"cmo": "Chief Marketing Officer"
+		  },
+        "output": {
+			"name": "Widget Company Ltd",
+			"strapline": "Making the best widgets",
+			"website": "https://www.widgetcompany.com",
+			"employees": [
+			  [
+				"Jane Smith",
+				"Chief Executive Officer",
+				"https://www.widgetcompany.com/team/janesmith",
+				"janesmith",
+				"janesmithwidgets"
+			  ],
+			  [
+				"John Wilson",
+				"Chief Technology Officer",
+				"https://www.widgetcompany.com/team/johnwilson",
+				"johnwilson",
+				"jono"
+			  ],
+			  [
+				"Dashna Anand",
+				"Chief Marketing Officer",
+				"https://www.widgetcompany.com/team/dashnaanand",
+				"dashnaanand",
+				"dashnaanand"
+			  ]
+			]
+		  }
+    }, {
+        "id": "playground-3",
+        "desc": "Source: https://www.unpacker.uk/playground?e=3",
+        "input": {
+			"@n": 1,
+			"o": {
+			  "n": "NUM Example Co",
+			  "s": "Example Strapline",
+			  "c": [
+				{"t": {"d": "Customer Service", "v": "+441270123456"}},
+				{"fb": {"v": "examplefacebook"}},
+				{"in": {"v": "exampleinstagram"}},
+				{"tw": {"v": "exampletwitter"}}
+			  ]
+			}
+		  },
+        "trans": {
+			"o": {
+			  "rewriteKey": "organisation",
+			  "assignKeys": [
+				"n",
+				"s",
+				"c"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.o.name",
+				"name": "%n",
+				"slogan": "%s",
+				"contacts": "%c"
+			  }
+			},
+			"p": {
+			  "rewriteKey": "person",
+			  "assignKeys": [
+				"n",
+				"b",
+				"c"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.p.name",
+				"name": "%n",
+				"bio": "%b",
+				"contacts": "%c"
+			  }
+			},
+			"e": {
+			  "rewriteKey": "employee",
+			  "assignKeys": [
+				"n",
+				"r",
+				"c"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.e.name",
+				"name": "%n",
+				"role": "%r",
+				"contacts": "%c"
+			  }
+			},
+			"lc": {
+			  "rewriteKey": "location",
+			  "assignKeys": [
+				"n",
+				"d",
+				"c"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.lc.name",
+				"name": "%n",
+				"description": "%d",
+				"contacts": "%c"
+			  }
+			},
+			"gp": {
+			  "rewriteKey": "group",
+			  "assignKeys": [
+				"n",
+				"d",
+				"c"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.gp.name",
+				"name": "%n",
+				"description": "%d",
+				"contacts": "%c"
+			  }
+			},
+			"dp": {
+			  "rewriteKey": "department",
+			  "assignKeys": [
+				"n",
+				"d",
+				"c"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.dp.name",
+				"name": "%n",
+				"description": "%d",
+				"contacts": "%c"
+			  }
+			},
+			"a": {
+			  "rewriteKey": "address",
+			  "assignKeys": [
+				"al",
+				"pz",
+				"co",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"description": "%d",
+				"description_default": "%/subs.locale.a.default",
+				"lines": "%al",
+				"postcode": "%pz",
+				"country": "%co",
+				"method_type": "core",
+				"object_display_name": "%/subs.locale.a.name",
+				"prefix": ""
+			  }
+			},
+			"l": {
+			  "rewriteKey": "link",
+			  "assignKeys": [
+				"@L",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"@L": "%@L",
+				"description": "%d"
+			  }
+			},
+			"fb": {
+			  "rewriteKey": "facebook",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.fb.name",
+				"description_default": "%/subs.locale.fb.default",
+				"description": "%d",
+				"prefix": "https://www.facebook.com/",
+				"method_type": "third_party",
+				"controller": "facebook.com",
+				"value": "%v"
+			  }
+			},
+			"g": {
+			  "rewriteKey": "gps",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.g.name",
+				"description_default": "%/subs.locale.g.default",
+				"description": "%d",
+				"prefix": "",
+				"method_type": "core",
+				"value": "%v"
+			  }
+			},
+			"in": {
+			  "rewriteKey": "instagram",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.in.name",
+				"description_default": "%/subs.locale.in.default",
+				"description": "%d",
+				"prefix": "https://www.instagram.com/",
+				"method_type": "third_party",
+				"controller": "instagram.com",
+				"value": "%v"
+			  }
+			},
+			"li": {
+			  "rewriteKey": "linkedin",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.li.name",
+				"description_default": "%/subs.locale.li.default",
+				"description": "%d",
+				"prefix": "https://www.linkedin.com/",
+				"method_type": "third_party",
+				"controller": "linkedin.com",
+				"value": "%v"
+			  }
+			},
+			"yt": {
+			  "rewriteKey": "youtube",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.yt.name",
+				"description_default": "%/subs.locale.yt.default",
+				"description": "%d",
+				"prefix": "https://www.youtube.com/",
+				"method_type": "third_party",
+				"controller": "youtube.com",
+				"value": "%v"
+			  }
+			},
+			"pi": {
+			  "rewriteKey": "pinterest",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.pi.name",
+				"description_default": "%/subs.locale.pi.default",
+				"description": "%d",
+				"prefix": "https://www.pinterest.com/",
+				"method_type": "third_party",
+				"controller": "pinterest.com",
+				"value": "%v"
+			  }
+			},
+			"tw": {
+			  "rewriteKey": "twitter",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.tw.name",
+				"description_default": "%/subs.locale.tw.default",
+				"description": "%d",
+				"prefix": "https://www.twitter.com/",
+				"method_type": "third_party",
+				"controller": "twitter.com",
+				"value": "%v",
+				"value_prefix": "@"
+			  }
+			},
+			"t": {
+			  "rewriteKey": "telephone",
+			  "assignKeys": [
+				"v",
+				"d",
+				"h"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.t.name",
+				"description_default": "%/subs.locale.t.default",
+				"description": "%d",
+				"prefix": "tel:",
+				"method_type": "core",
+				"value": "%v",
+				"hours": "%h"
+			  }
+			},
+			"sm": {
+			  "rewriteKey": "sms",
+			  "assignKeys": [
+				"v",
+				"d",
+				"h"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.sm.name",
+				"description_default": "%/subs.locale.sm.default",
+				"description": "%d",
+				"prefix": "sms:",
+				"method_type": "core",
+				"value": "%v",
+				"hours": "%h"
+			  }
+			},
+			"em": {
+			  "rewriteKey": "email",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.em.name",
+				"description_default": "%/subs.locale.em.default",
+				"description": "%d",
+				"prefix": "mailto:",
+				"method_type": "core",
+				"value": "%v"
+			  }
+			},
+			"fx": {
+			  "rewriteKey": "fax",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.fx.name",
+				"description_default": "%/subs.locale.fx.default",
+				"description": "%d",
+				"prefix": "tel:",
+				"method_type": "core",
+				"value": "%v"
+			  }
+			},
+			"u": {
+			  "rewriteKey": "url",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.u.name",
+				"description_default": "%/subs.locale.u.default",
+				"description": "%d",
+				"prefix": "https://",
+				"method_type": "core",
+				"value": "%v"
+			  }
+			},
+			"uu": {
+			  "rewriteKey": "unsecure_url",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "%/subs.locale.uu.name",
+				"description_default": "%/subs.locale.uu.default",
+				"description": "%d",
+				"prefix": "http://",
+				"method_type": "core",
+				"value": "%v"
+			  }
+			},
+			"av": {
+			  "rewriteKey": "available"
+			},
+			"tz": {
+			  "rewriteKey": "time_zone_location"
+			},
+			"i": {
+			  "rewriteKey": "introduction"
+			},
+			"ac": {
+			  "rewriteKey": "access"
+			},
+			"aa": {
+			  "rewriteKey": "android-app",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.aa.name",
+				"description_default": "locale.aa.default",
+				"prefix": "https://play.google.com/store/apps/details?id=",
+				"method_type": "third_party",
+				"controller": "play.google.com"
+			  }
+			},
+			"as": {
+			  "rewriteKey": "ios-app",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.as.name",
+				"description_default": "locale.as.default",
+				"prefix": "https://itunes.apple.com/app/",
+				"method_type": "third_party",
+				"controller": "apps.apple.com"
+			  }
+			},
+			"bt": {
+			  "rewriteKey": "baidu_tieba",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.bt.name",
+				"description_default": "locale.bt.default",
+				"prefix": "https://tieba.baidu.com/",
+				"method_type": "third_party",
+				"controller": "tieba.baidu.com"
+			  }
+			},
+			"fs": {
+			  "rewriteKey": "foursquare",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.fs.name",
+				"description_default": "locale.fs.default",
+				"prefix": "https://www.foursquare.com/",
+				"method_type": "third_party",
+				"controller": "foursquare.com"
+			  }
+			},
+			"ft": {
+			  "rewriteKey": "facetime",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.ft.name",
+				"description_default": "locale.ft.default",
+				"prefix": "facetime://",
+				"method_type": "third_party",
+				"controller": "facetime@apple.com"
+			  }
+			},
+			"gh": {
+			  "rewriteKey": "github",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.gh.name",
+				"description_default": "locale.gh.default",
+				"prefix": "https://www.github.com/",
+				"method_type": "third_party",
+				"controller": "github.com"
+			  }
+			},
+			"im": {
+			  "rewriteKey": "imessage",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.im.name",
+				"description_default": "locale.im.default",
+				"prefix": "imessage://",
+				"method_type": "third_party",
+				"controller": "imessage@apple.com"
+			  }
+			},
+			"kk": {
+			  "rewriteKey": "kik",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.kk.name",
+				"description_default": "locale.kk.default",
+				"prefix": "https://www.kik.com/u/",
+				"method_type": "third_party",
+				"controller": "kik.com"
+			  }
+			},
+			"ln": {
+			  "rewriteKey": "line",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.ln.name",
+				"description_default": "locale.ln.default",
+				"prefix": "line://",
+				"method_type": "third_party",
+				"controller": "line.me"
+			  }
+			},
+			"md": {
+			  "rewriteKey": "medium",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.md.name",
+				"description_default": "locale.md.default",
+				"prefix": "https://www.medium.com/",
+				"method_type": "third_party",
+				"controller": "medium.com"
+			  }
+			},
+			"pr": {
+			  "rewriteKey": "periscope",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.pr.name",
+				"description_default": "locale.pr.default",
+				"prefix": "https://www.periscope.tv/",
+				"method_type": "third_party",
+				"controller": "periscope.tv"
+			  }
+			},
+			"qq": {
+			  "rewriteKey": "qq",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.qq.name",
+				"description_default": "locale.qq.default",
+				"prefix": "https://www.qq.com/",
+				"method_type": "third_party",
+				"controller": "qq.com"
+			  }
+			},
+			"qz": {
+			  "rewriteKey": "qzone",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.qz.name",
+				"description_default": "locale.qz.default",
+				"prefix": "https://www.qzone.com/",
+				"method_type": "third_party",
+				"controller": "qzone.com"
+			  }
+			},
+			"rd": {
+			  "rewriteKey": "reddit",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.rd.name",
+				"description_default": "locale.rd.default",
+				"prefix": "https://www.reddit.com/r/",
+				"method_type": "third_party",
+				"controller": "reddit.com"
+			  }
+			},
+			"rn": {
+			  "rewriteKey": "renren",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.rn.name",
+				"description_default": "locale.rn.default",
+				"prefix": "https://www.renren.com/",
+				"method_type": "third_party",
+				"controller": "renren.com"
+			  }
+			},
+			"sc": {
+			  "rewriteKey": "soundcloud",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.sc.name",
+				"description_default": "locale.sc.default",
+				"prefix": "https://www.soundcloud.com/",
+				"method_type": "third_party",
+				"controller": "soundcloud.com"
+			  }
+			},
+			"sk": {
+			  "rewriteKey": "skype",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.sk.name",
+				"description_default": "locale.sk.default",
+				"prefix": "skype:",
+				"method_type": "third_party",
+				"controller": "skype.com"
+			  }
+			},
+			"sr": {
+			  "rewriteKey": "swarm",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.sr.name",
+				"description_default": "locale.sr.default",
+				"prefix": "https://www.swarmapp.com/",
+				"method_type": "third_party",
+				"controller": "swarmapp.com"
+			  }
+			},
+			"sn": {
+			  "rewriteKey": "snapchat",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.sn.name",
+				"description_default": "locale.sn.default",
+				"prefix": "snapchat://add/",
+				"method_type": "third_party",
+				"controller": "snapchat.com"
+			  }
+			},
+			"sw": {
+			  "rewriteKey": "sina-weibo",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.sw.name",
+				"description_default": "locale.sw.default",
+				"prefix": "https://www.weibo.com/",
+				"method_type": "third_party",
+				"controller": "weibo.com"
+			  }
+			},
+			"tb": {
+			  "rewriteKey": "tumblr",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.tb.name",
+				"description_default": "locale.tb.default",
+				"prefix": "https://.tumblr.com/",
+				"method_type": "third_party",
+				"controller": "tumblr.com"
+			  }
+			},
+			"tl": {
+			  "rewriteKey": "telegram",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.tl.name",
+				"description_default": "locale.tl.default",
+				"prefix": "https://www.telegram.me/",
+				"method_type": "third_party",
+				"controller": "telegram.com"
+			  }
+			},
+			"to": {
+			  "rewriteKey": "twoo",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.to.name",
+				"description_default": "locale.to.default",
+				"prefix": "https://www.twoo.com/",
+				"method_type": "third_party",
+				"controller": "twoo.com"
+			  }
+			},
+			"vb": {
+			  "rewriteKey": "viber",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.vb.name",
+				"description_default": "locale.vb.default",
+				"prefix": "https://www.viber.com/",
+				"method_type": "third_party",
+				"controller": "viber.com"
+			  }
+			},
+			"vk": {
+			  "rewriteKey": "vkontakte",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.vk.name",
+				"description_default": "locale.vk.default",
+				"prefix": "https://www.vk.com/",
+				"method_type": "third_party",
+				"controller": "vk.com"
+			  }
+			},
+			"vm": {
+			  "rewriteKey": "vimeo",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.vm.name",
+				"description_default": "locale.vm.default",
+				"prefix": "https://www.vimeo.com/",
+				"method_type": "third_party",
+				"controller": "vimeo.com"
+			  }
+			},
+			"wa": {
+			  "rewriteKey": "whatsapp",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.wa.name",
+				"description_default": "locale.wa.default",
+				"prefix": "whatsapp://",
+				"method_type": "third_party",
+				"controller": "whatsapp.com"
+			  }
+			},
+			"wc": {
+			  "rewriteKey": "wechat",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.wc.name",
+				"description_default": "locale.wc.default",
+				"prefix": "https://www.wechat.com/",
+				"method_type": "third_party",
+				"controller": "wechat.com"
+			  }
+			},
+			"xi": {
+			  "rewriteKey": "xing",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.xi.name",
+				"description_default": "locale.xi.default",
+				"prefix": "https://www.xing.com/",
+				"method_type": "third_party",
+				"controller": "xing.com"
+			  }
+			},
+			"yy": {
+			  "rewriteKey": "yy",
+			  "assignKeys": [
+				"v",
+				"d"
+			  ],
+			  "rewriteValue": {
+				"object_display_name": "locale.yy.name",
+				"description_default": "locale.yy.default",
+				"prefix": "https://www.yy.com/",
+				"method_type": "third_party",
+				"controller": "yy.com"
+			  }
+			}
+		  },
+        "subs": {
+			"locale": {
+			  "p": {"name": "Person"},
+			  "gr": {"name": "Group"},
+			  "o": {"name": "Organisation"},
+			  "dp": {"name": "Department"},
+			  "e": {"name": "Employee"},
+			  "lc": {"name": "Location"},
+			  "gp": {"name": "Group"},
+			  "t": {"name": "Telephone", "default": "Call"},
+			  "sm": {"name": "SMS", "default": "Text"},
+			  "u": {"name": "Web URL", "default": "Click"},
+			  "uu": {"name": "Web URL (http - unsecure)", "default": "Click"},
+			  "g": {"name": "GPS", "default": "View Location"},
+			  "a": {"name": "Address", "default": "View Address"},
+			  "fx": {"name": "Fax", "default": "Send a fax"},
+			  "em": {"name": "Email", "default": "Send an email"},
+			  "aa": {"name": "Android App", "default": "Download the app"},
+			  "as": {"name": "iOS App", "default": "Download the app"},
+			  "bt": {"name": "Baidu Tieba", "default": "View Baidu profile"},
+			  "fb": {"name": "Facebook", "default": "View Facebook profile"},
+			  "fs": {"name": "FourSquare", "default": "View FourSquare page"},
+			  "ft": {"name": "FaceTime", "default": "Call with Facetime"},
+			  "gh": {"name": "Github", "default": "View Github profile"},
+			  "im": {"name": "iMessage", "default": "Send iMessage"},
+			  "in": {"name": "Instagram", "default": "View Instagram profile"},
+			  "kk": {"name": "Kik", "default": "Connect with Kik"},
+			  "li": {"name": "LinkedIn", "default": "View LinkedIn page"},
+			  "ln": {"name": "Line", "default": "Connect with Line"},
+			  "md": {"name": "Medium", "default": "View Medium blog"},
+			  "pr": {"name": "Periscope", "default": "View Periscope profile"},
+			  "pi": {"name": "Pinterest", "default": "View Pinterest board"},
+			  "qq": {"name": "QQ", "default": "View QQ Page"},
+			  "qz": {"name": "Qzone", "default": "View Qzone Page"},
+			  "rd": {"name": "Reddit", "default": "View subreddit"},
+			  "rn": {"name": "Renren", "default": "View Renren profile"},
+			  "sc": {"name": "Soundcloud", "default": "View Soundcloud page"},
+			  "sk": {"name": "Skype", "default": "Call with Skype"},
+			  "sr": {"name": "Swarm", "default": "Connect with Swarm"},
+			  "sn": {"name": "Snapchat", "default": "Connect with Snapchat"},
+			  "sw": {"name": "Sina Weibo", "default": "View Weibo page"},
+			  "tb": {"name": "Tumblr", "default": "View Tumblr blog"},
+			  "tl": {"name": "Telegram", "default": "Connect with Telegram"},
+			  "tw": {"name": "Twitter", "default": "View Twitter profile"},
+			  "to": {"name": "Twoo", "default": "View Twoo page"},
+			  "vb": {"name": "Viber", "default": "Call with Viber"},
+			  "vk": {"name": "Vkontakte", "default": "View VK page"},
+			  "vm": {"name": "Vimeo", "default": "View Vimeo profile"},
+			  "wa": {"name": "Whatsapp", "default": "Message on Whatsapp"},
+			  "wc": {"name": "WeChat", "default": "Connect with WeChat"},
+			  "xi": {"name": "Xing", "default": "View Xing page"},
+			  "yt": {"name": "YouTube", "default": "View YouTube channel"},
+			  "yy": {"name": "YY", "default": "View YY page"}
+			},
+			"AC": "Accounts",
+			"CS": "Customer Service"
+		  },
+        "output": {
+			"@n": 1,
+			"organisation": {
+			  "object_display_name": "Organisation",
+			  "name": "NUM Example Co",
+			  "slogan": "Example Strapline",
+			  "contacts": [
+				{
+				  "telephone": {
+					"object_display_name": "Telephone",
+					"description_default": "Call",
+					"description": "Customer Service",
+					"prefix": "tel:",
+					"method_type": "core",
+					"value": "+441270123456",
+					"hours": null
+				  }
+				},
+				{
+				  "facebook": {
+					"object_display_name": "Facebook",
+					"description_default": "View Facebook profile",
+					"description": null,
+					"prefix": "https://www.facebook.com/",
+					"method_type": "third_party",
+					"controller": "facebook.com",
+					"value": "examplefacebook"
+				  }
+				},
+				{
+				  "instagram": {
+					"object_display_name": "Instagram",
+					"description_default": "View Instagram profile",
+					"description": null,
+					"prefix": "https://www.instagram.com/",
+					"method_type": "third_party",
+					"controller": "instagram.com",
+					"value": "exampleinstagram"
+				  }
+				},
+				{
+				  "twitter": {
+					"object_display_name": "Twitter",
+					"description_default": "View Twitter profile",
+					"description": null,
+					"prefix": "https://www.twitter.com/",
+					"method_type": "third_party",
+					"controller": "twitter.com",
+					"value": "exampletwitter",
+					"value_prefix": "@"
+				  }
+				}
+			  ]
+			}
+		  }
+    }, {
+        "id": "all",
+        "desc": "Source: https://www.notion.so/num/Unpacker-Specification-f3385257766e44b4abf70fec4650ff7d",
+        "input": {
+			"?": ["https://www.widgetcompany.com", "team", "janesmith", "johnwilson", "dashnaanand"],
+			"o": [
+			  "Widget Company Ltd",
+			  "Making the best widgets",
+			  "%0",
+			  [
+				["Jane Smith", "%ceo", "%0%/%1%/%2", "%2", "%2%widgets"],
+				["John Wilson", "%cto", "%0%/%1%/%3", "%3", "jono"],
+				["Dashna Anand", "%cmo", "%0%/%1%/%4", "%4", "%4"]
+			  ]
+			]
+		  },
+        "trans": {
+			"o": {
+			  "assignKeys": ["n", "s", "w", "e"],
+			  "replacePair": {
+				"name": "%n",
+				"strapline": "%s",
+				"website": "%w",
+				"employees": "%e"
+			  }
+			},
+			"e" : {
+			  "arrayItems" : "em"
+			},
+			"em": {
+			  "assignKeys": ["n", "p", "b", "l", "t"],
+			  "replacePair": {
+				"name": "%n",
+				"position": "%p",
+				"bio": "%b",
+				"linkedin": "https://www.linkedin.com/in/%l",
+				"twitter": "https://www.twitter.com/%t"
+			  }
+			}
+		  },
+        "subs": {
+			"ceo": "Chief Executive Officer",
+			"cto": "Chief Technology Officer",
+			"cmo": "Chief Marketing Officer"
+		  },
+        "output": {
+			"name": "Widget Company Ltd",
+			"strapline": "Making the best widgets",
+			"website": "https://www.widgetcompany.com",
+			"employees": [{
+			  "name": "Jane Smith",
+			  "position": "Chief Executive Officer",
+			  "bio": "https://www.widgetcompany.com/team/janesmith",
+			  "linkedin": "https://www.linkedin.com/in/janesmith",
+			  "twitter": "https://www.twitter.com/janesmithwidgets"
+			}, {
+			  "name": "John Wilson",
+			  "position": "Chief Technology Officer",
+			  "bio": "https://www.widgetcompany.com/team/johnwilson",
+			  "linkedin": "https://www.linkedin.com/in/johnwilson",
+			  "twitter": "https://www.twitter.com/jono"
+			}, {
+			  "name": "Dashna Anand",
+			  "position": "Chief Marketing Officer",
+			  "bio": "https://www.widgetcompany.com/team/dashnaanand",
+			  "linkedin": "https://www.linkedin.com/in/dashnaanand",
+			  "twitter": "https://www.twitter.com/dashnaanand"
+			}]
+		  }
+    }, {
+        "id": "all-step-1",
+        "input": {"n":"Widget Company Ltd","s":"Making the best widgets","w":"https://www.widgetcompany.com","e":[{"n":"Jane Smith","p":"Chief Executive Officer","b":"https://www.widgetcompany.com/team/janesmith","l":"https://www.linkedin.com/janesmith","t":"https://www.twitter.com/janesmithwidgets"},{"n":"John Wilson","p":"Chief Technology Officer","b":"https://www.widgetcompany.com/team/johnwilson","l":"https://www.linkedin.com/in/johnwilson","t":"https://www.twitter.com/jono"},{"n":"Dashna Anand","p":"Chief Marketing Officer","b":"https://www.widgetcompany.com/team/dashnaanand","l":"https://www.linkedin.com/in/dashnaanand","t":"https://www.twitter.com/dashnaanand"}]},
+		"trans": {"n":{"rewriteKey":"name"},"s":{"rewriteKey":"strapline"},"w":{"rewriteKey":"website"},"e":{"rewriteKey":"employees"},"p":{"rewriteKey":"position"},"b":{"rewriteKey":"bio"},"l":{"rewriteKey":"linkedin"},"t":{"rewriteKey":"twitter"}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "all-step-2",
+        "input": {"n":"Widget Company Ltd","s":"Making the best widgets","w":"https://www.widgetcompany.com","e":[{"n":"Jane Smith","p":"Chief Executive Officer","b":"https://www.widgetcompany.com/team/janesmith","l":"janesmith","t":"janesmithwidgets"},{"n":"John Wilson","p":"Chief Technology Officer","b":"https://www.widgetcompany.com/team/johnwilson","l":"johnwilson","t":"jono"},{"n":"Dashna Anand","p":"Chief Marketing Officer","b":"https://www.widgetcompany.com/team/dashnaanand","l":"dashnaanand","t":"dashnaanand"}]},
+		"trans": {"n":{"rewriteKey":"name"},"s":{"rewriteKey":"strapline"},"w":{"rewriteKey":"website"},"e":{"rewriteKey":"employees"},"p":{"rewriteKey":"position"},"b":{"rewriteKey":"bio"},"l":{"rewriteKey":"linkedin","rewriteValue":"https://www.linkedin.com/in/%self"},"t":{"rewriteKey":"twitter","rewriteValue":"https://www.twitter.com/%self"}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "all-step-3a-1",
+        "input": {"o":["Widget Company Ltd","Making the best widgets","https://www.widgetcompany.com",[{"n":"Jane Smith","p":"Chief Executive Officer","b":"https://www.widgetcompany.com/team/janesmith","l":"janesmith","t":"janesmithwidgets"},{"n":"John Wilson","p":"Chief Technology Officer","b":"https://www.widgetcompany.com/team/johnwilson","l":"johnwilson","t":"jono"},{"n":"Dashna Anand","p":"Chief Marketing Officer","b":"https://www.widgetcompany.com/team/dashnaanand","l":"dashnaanand","t":"dashnaanand"}]]},
+		"trans": {"o":{"assignKeys":["n","s","w","e"],"rewriteValue":{"name":"%n","strapline":"%s","website":"%w","employees":"%e"}},"n":{"rewriteKey":"name"},"p":{"rewriteKey":"position"},"b":{"rewriteKey":"bio"},"l":{"rewriteKey":"linkedin","rewriteValue":"https://www.linkedin.com/in/%self"},"t":{"rewriteKey":"twitter","rewriteValue":"https://www.twitter.com/%self"}},
+        "output": {"o":{"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}}
+    }, {
+        "id": "all-step-3a-2",
+        "input": {"o":["Widget Company Ltd","Making the best widgets","https://www.widgetcompany.com",[{"n":"Jane Smith","p":"Chief Executive Officer","b":"https://www.widgetcompany.com/team/janesmith","l":"janesmith","t":"janesmithwidgets"},{"n":"John Wilson","p":"Chief Technology Officer","b":"https://www.widgetcompany.com/team/johnwilson","l":"johnwilson","t":"jono"},{"n":"Dashna Anand","p":"Chief Marketing Officer","b":"https://www.widgetcompany.com/team/dashnaanand","l":"dashnaanand","t":"dashnaanand"}]]},
+		"trans": {"o":{"assignKeys":["n","s","w","e"],"replacePair":{"name":"%n","strapline":"%s","website":"%w","employees":"%e"}},"n":{"rewriteKey":"name"},"p":{"rewriteKey":"position"},"b":{"rewriteKey":"bio"},"l":{"rewriteKey":"linkedin","rewriteValue":"https://www.linkedin.com/in/%self"},"t":{"rewriteKey":"twitter","rewriteValue":"https://www.twitter.com/%self"}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "all-step-3b",
+        "input": {"o":["Widget Company Ltd","Making the best widgets","https://www.widgetcompany.com",[{"em":["Jane Smith","Chief Executive Officer","https://www.widgetcompany.com/team/janesmith","janesmith","janesmithwidgets"]},{"em":["John Wilson","Chief Technology Officer","https://www.widgetcompany.com/team/johnwilson","johnwilson","jono"]},{"em":["Dashna Anand","Chief Marketing Officer","https://www.widgetcompany.com/team/dashnaanand","dashnaanand","dashnaanand"]}]]},
+		"trans": {"o":{"assignKeys":["n","s","w","e"],"replacePair":{"name":"%n","strapline":"%s","website":"%w","employees":"%e"}},"em":{"assignKeys":["n","p","b","l","t"],"replacePair":{"name":"%n","position":"%p","bio":"%b","linkedin":"https://www.linkedin.com/in/%l","twitter":"https://www.twitter.com/%t"}}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "all-step-4",
+        "input": {"o":["Widget Company Ltd","Making the best widgets","https://www.widgetcompany.com",[["Jane Smith","Chief Executive Officer","https://www.widgetcompany.com/team/janesmith","janesmith","janesmithwidgets"],["John Wilson","Chief Technology Officer","https://www.widgetcompany.com/team/johnwilson","johnwilson","jono"],["Dashna Anand","Chief Marketing Officer","https://www.widgetcompany.com/team/dashnaanand","dashnaanand","dashnaanand"]]]},
+		"trans": {"o":{"assignKeys":["n","s","w","e"],"replacePair":{"name":"%n","strapline":"%s","website":"%w","employees":"%e"}},"e":{"arrayItems":"em"},"em":{"assignKeys":["n","p","b","l","t"],"replacePair":{"name":"%n","position":"%p","bio":"%b","linkedin":"https://www.linkedin.com/in/%l","twitter":"https://www.twitter.com/%t"}}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "all-step-5",
+        "input": {"?":["https://www.widgetcompany.com","team","janesmith","johnwilson","dashnaanand"],"o":["Widget Company Ltd","Making the best widgets","%0",[["Jane Smith","Chief Executive Officer","%0%/%1%/%2","%2","%2%widgets"],["John Wilson","Chief Technology Officer","%0%/%1%/%3","%3","jono"],["Dashna Anand","Chief Marketing Officer","%0%/%1%/%4","%4","%4"]]]},
+		"trans": {"o":{"assignKeys":["n","s","w","e"],"replacePair":{"name":"%n","strapline":"%s","website":"%w","employees":"%e"}},"e":{"arrayItems":"em"},"em":{"assignKeys":["n","p","b","l","t"],"replacePair":{"name":"%n","position":"%p","bio":"%b","linkedin":"https://www.linkedin.com/in/%l","twitter":"https://www.twitter.com/%t"}}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "all-step-6",
+        "input": {"?":["https://www.widgetcompany.com","team","janesmith","johnwilson","dashnaanand"],"o":["Widget Company Ltd","Making the best widgets","%0",[["Jane Smith","%ceo","%0%/%1%/%2","%2","%2%widgets"],["John Wilson","%cto","%0%/%1%/%3","%3","jono"],["Dashna Anand","%cmo","%0%/%1%/%4","%4","%4"]]]},
+		"subs": {"ceo":"Chief Executive Officer","cto":"Chief Technology Officer","cmo":"Chief Marketing Officer"},
+		"trans": {"o":{"assignKeys":["n","s","w","e"],"replacePair":{"name":"%n","strapline":"%s","website":"%w","employees":"%e"}},"e":{"arrayItems":"em"},"em":{"assignKeys":["n","p","b","l","t"],"replacePair":{"name":"%n","position":"%p","bio":"%b","linkedin":"https://www.linkedin.com/in/%l","twitter":"https://www.twitter.com/%t"}}},
+        "output": {"name":"Widget Company Ltd","strapline":"Making the best widgets","website":"https://www.widgetcompany.com","employees":[{"name":"Jane Smith","position":"Chief Executive Officer","bio":"https://www.widgetcompany.com/team/janesmith","linkedin":"https://www.linkedin.com/in/janesmith","twitter":"https://www.twitter.com/janesmithwidgets"},{"name":"John Wilson","position":"Chief Technology Officer","bio":"https://www.widgetcompany.com/team/johnwilson","linkedin":"https://www.linkedin.com/in/johnwilson","twitter":"https://www.twitter.com/jono"},{"name":"Dashna Anand","position":"Chief Marketing Officer","bio":"https://www.widgetcompany.com/team/dashnaanand","linkedin":"https://www.linkedin.com/in/dashnaanand","twitter":"https://www.twitter.com/dashnaanand"}]}
+    }, {
+        "id": "NestedPassThrough-1",
+        "desc": "Unpacker can pass-through nested objects",
+        "input": {"this":{"that":2,"then":3},"x":"y"},
+		"trans": {"this":{"rewriteKey":"foo","that":{"rewriteKey":"bar"}}},
+        "output": {"foo":{"bar":2,"then":3},"x":"y"}
+    }, {
+        "id": "NestedPassThrough-2",
+        "desc": "Unpacker can pass-through nested objects",
+        "input": {"this":{"that":2,"pass-through":"ok","then":{"the other":{"another":"thing","pass-through":"ok"},"pass-through":"ok"}},"x":"y","pass-through":"ok"},
+		"trans": {"this":{"rewriteKey":"Alpha","that":{"rewriteKey":"Beta"},"then":{"rewriteKey":"Gamma","the other":{"rewriteKey":"Delta","another":{"rewriteKey":"Epsilon"}}}}},
+        "output": {"Alpha":{"Beta":2,"pass-through":"ok","Gamma":{"Delta":{"Epsilon":"thing","pass-through":"ok"},"pass-through":"ok"}},"x":"y","pass-through":"ok"}
+    }, {
+        "id": "Supplementary-1",
+        "desc": "variable index may include arbitrarily nested maps, arrays, and primitives",
+        "input": {"?":["string",1,true,{"x":{"y":{"z":"Hello World"}}},[{"x":{"y":{"z":"Brave New World"}}}]],"a":"%0","b":"%1","c":"%2","d":"%3.x.y.z","e":"%4.0.x.y.z"},
+        "output": {"a":"string","b":1,"c":true,"d":"Hello World","e":"Brave New World"}
+    }, {
+        "id": "Supplementary-2",
+        "desc": "%-prefixes and suffixes (NOTE: h expected is different from NUMTechnology/object-unpacker)",
+        "input": {"?":["val"],"a":"%0","b":"%0%","c":"x%0","d":"%0 x","e":"x%0%x","f":"x%0%0%x","g":"x%0%%0%x","h":"x%0%%%%0%x","i":"%0 %%0"},
+        "output": {"a":"val","b":"val","c":"xval","d":"val x","e":"xvalx","f":"xval0","g":"xvalvalx","h":"xval%valx","i":"val %0"}
+    }, {
+        "id": "Supplementary-3",
+        "desc": "unresolved references (NOTE: h1 and h2 expected is different from NUMTechnology/object-unpacker)",
+        "input": {"a1":"%0","b1":"%0%","c1":"x%0","d1":"%0 x","e1":"x%0%x","f1":"x%0%0%x","g1":"x%0%%0%x","h1":"x%0%%%%0%x","i1":"%0 %%0","a2":"%x","b2":"%x%","c2":"x%x","d2":"%x x","e2":"x%x%x","f2":"x%x%x%x","g2":"x%x%%x%x","h2":"x%x%%%%x%x","i2":"%x %%x"},
+        "output": {"a1":null,"b1":null,"c1":"x","d1":" x","e1":"xx","f1":"x0","g1":"xx","h1":"x%x","i1":" %0","a2":null,"b2":null,"c2":"x","d2":" x","e2":"xx","f2":"xx","g2":"xx","h2":"x%x","i2":" %x"}
+    }, {
+        "id": "Supplementary-4",
+        "desc": "remove pairs when `replacePair` is null",
+        "input": {"foo":"Hello World"},
+		"trans": {"foo":{}},
+        "output": {}
+    }, {
+		"id": "Supplementary-n8",
+		"desc": "test does not exist in NumTechnology/object-unpacker",
+		"input": {
+			"?": [
+			  0,
+			  null,
+			  [],
+			  {},
+			  false
+			],
+			"a": "%0",
+			"b": "==%0%==",
+			"c": "%1",
+			"d": "==%1%==",
+			"e": "%2",
+			"f": "==%2%==",
+			"g": "%3",
+			"h": "==%3%==",
+			"i": "%4",
+			"j": "==%4%=="
+		  },
+		"output": {
+			"a": 0,
+			"b": "==0==",
+			"c": null,
+			"d": "====",
+			"e": [],
+			"f": "====",
+			"g": {},
+			"h": "====",
+			"i": false,
+			"j": "==false=="
+		  }
+	}, {
+        "id": "ObjectUnpacker-01",
+        "input": {"@n":1,"?":["tesco"],"o":{"n":"Tesco","s":"Every Little Helps","c":[{"fb":"%0"},{"pi":"%0"}]}},
+		"trans_file": "schema-map.json",
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":[{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","description":null,"prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"tesco"}},{"pinterest":{"object_display_name":"Pinterest","description_default":"View Pinterest board","description":null,"prefix":"https://www.pinterest.com/","method_type":"third_party","controller":"pinterest.com","value":"tesco"}}]}}
+    }, {
+        "id": "ObjectUnpacker-02",
+        "input": {"@n":1,"o":{"n":"NUM Example Co","s":"Example Strapline","c":[{"t":{"d":"Customer Service","v":"+441270123456"}},{"fb":{"v":"examplefacebook"}},{"in":{"v":"exampleinstagram"}},{"tw":{"v":"exampletwitter"}}]}},
+		"trans_file": "schema-map.json",
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"organisation":{"object_display_name":"Organisation","name":"NUM Example Co","slogan":"Example Strapline","contacts":[{"telephone":{"object_display_name":"Telephone","description_default":"Call","description":"Customer Service","prefix":"tel:","method_type":"core","value":"+441270123456","hours":null}},{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","description":null,"prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"examplefacebook"}},{"instagram":{"object_display_name":"Instagram","description_default":"View Instagram profile","description":null,"prefix":"https://www.instagram.com/","method_type":"third_party","controller":"instagram.com","value":"exampleinstagram"}},{"twitter":{"object_display_name":"Twitter","description_default":"View Twitter profile","description":null,"prefix":"https://www.twitter.com/","method_type":"third_party","controller":"twitter.com","value":"exampletwitter","value_prefix":"@"}}]}}
+    }, {
+        "id": "ObjectUnpacker-03",
+        "input": {"o":{"n":"Tesco","s":"Every Little Helps","c":["test1","test2"]}},
+		"trans_file": "schema-map.json",
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":["test1","test2"]}}
+    }, {
+        "id": "ObjectUnpacker-04",
+        "input": {"o":{"n":"Tesco","s":"Every Little Helps","c":[{"fb":"test1"},{"pi":"test2"}]}},
+		"trans_file": "schema-map.json",
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"organisation":{"object_display_name":"Organisation","name":"Tesco","slogan":"Every Little Helps","contacts":[{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","description":null,"prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"test1"}},{"pinterest":{"object_display_name":"Pinterest","description_default":"View Pinterest board","description":null,"prefix":"https://www.pinterest.com/","method_type":"third_party","controller":"pinterest.com","value":"test2"}}]}}
+    }, {
+        "id": "ObjectUnpacker-05",
+        "input": {"@n":1,"o":{"n":"Nemo Finders Ltd","id":"832765467","a":["42 West Wallaby Way,","Sydney,","Australia"],"p":"SN1","co":"OZ","e":"bruce@nemo-finders.oz"}},
+		"trans": {"@n":{"rewriteValue":"%/compact.@n"},"o":{"rewriteKey":"organisation","assignKeys":["n","id","a","p","co","e"],"rewriteValue":{"name":"%n","identifier":"%id","address":"%a","postcode_zip":"%p","country":"%co","email":"%e","object_display_name":"Organisation"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"organisation":{"name":"Nemo Finders Ltd","identifier":"832765467","address":["42 West Wallaby Way,","Sydney,","Australia"],"postcode_zip":"SN1","country":"OZ","email":"bruce@nemo-finders.oz","object_display_name":"Organisation"}}
+    }, {
+        "id": "ObjectUnpacker-06",
+        "input": {"@n":1,"o":{"n":true,"id":[1],"a":[1,2,3,4,true,false],"p":"SN25 4YF","co":"UK","e":"tony@aosd.co.uk"}},
+		"trans": {"@n":{"rewriteValue":"%/compact.@n"},"o":{"rewriteKey":"organisation","assignKeys":["n","id","a","p","co","e"],"rewriteValue":{"name":"%n","identifier":"%id","address":"%a","postcode_zip":"%p","country":"%co","email":"%e","object_display_name":"Organisation"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"organisation":{"name":true,"identifier":[1],"address":[1,2,3,4,true,false],"postcode_zip":"SN25 4YF","country":"UK","email":"tony@aosd.co.uk","object_display_name":"Organisation"}}
+    }, {
+        "id": "ObjectUnpacker-07",
+        "input": {"o":"tesco"},
+		"trans_file": "schema-map.json",
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"organisation":{"object_display_name":"Organisation","name":"tesco","slogan":null,"contacts":null}}
+    }, {
+        "id": "ObjectUnpacker-08",
+        "input": {"p":{"f":"John","l":"Smith","a":20}},
+		"trans": {"p":{"rewriteKey":"person","rewriteValue":{"first":"%/compact.p.f","last":"%/compact.p.l","age":"%/compact.p.a"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"person":{"first":"John","last":"Smith","age":20}}
+    }, {
+        "id": "ObjectUnpacker-09",
+        "input": {"p":["John","Smith",20]},
+		"trans": {"p":{"rewriteKey":"person","assignKeys":["first","last","age"]}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"person":{"first":"John","last":"Smith","age":20}}
+    }, {
+        "id": "ObjectUnpacker-10",
+        "input": {"p":["John","Smith",20]},
+		"trans": {"p":{"rewriteKey":"person","assignKeys":["first","last","age"],"rewriteValue":{"name":{"first":"%first","last":"%last"},"age":"%age","link":"https://www.example.com/team/%first%%last%"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"person":{"name":{"first":"John","last":"Smith"},"age":20,"link":"https://www.example.com/team/JohnSmith"}}
+    }, {
+        "id": "ObjectUnpacker-10.5",
+        "input": {"@n":1,"o":{"c":[{"l":{"d":"Hotel Reception","@L":"/hotel"}},{"l":{"d":"Restaurant","@L":"/restaurant"}},{"t":{"d":"Call Us On","v":"+441270625283","h":{"tz":"LON","av":["wd@7-23","6@7-0","7@8-23"]}}},{"fb":{"v":"The-Crown-Hotel-Bar-Grill-195748670483812","d":"Follow Us"}},{"tw":{"v":"Crown_Hotel","d":"Follow Us"}},{"u":{"v":"crownhotelnantwich.com","d":"Visit Website"}},{"fx":{"v":"01270 628047"}},{"em":{"v":"info@crownhotelnantwich.com","d":"Send an email"}},{"a":{"al":["High Street","Nantwich","Cheshire","CW5 5AS"],"d":"Find Us"}}],"n":"The Crown Hotel Bar and Grill Nantwich"}},
+		"trans_file": "schema-map.json",
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"organisation":{"object_display_name":"Organisation","name":"The Crown Hotel Bar and Grill Nantwich","slogan":null,"contacts":[{"link":{"@L":"/hotel","description":"Hotel Reception","name":null,"object_display_name":"Link"}},{"link":{"@L":"/restaurant","description":"Restaurant","name":null,"object_display_name":"Link"}},{"telephone":{"object_display_name":"Telephone","description_default":"Call","description":"Call Us On","prefix":"tel:","method_type":"core","value":"+441270625283","hours":{"time_zone_location":"LON","available":["wd@7-23","6@7-0","7@8-23"]}}},{"facebook":{"object_display_name":"Facebook","description_default":"View Facebook profile","description":"Follow Us","prefix":"https://www.facebook.com/","method_type":"third_party","controller":"facebook.com","value":"The-Crown-Hotel-Bar-Grill-195748670483812"}},{"twitter":{"object_display_name":"Twitter","description_default":"View Twitter profile","description":"Follow Us","prefix":"https://www.twitter.com/","method_type":"third_party","controller":"twitter.com","value":"Crown_Hotel","value_prefix":"@"}},{"url":{"object_display_name":"Web URL","description_default":"Click","description":"Visit Website","prefix":"https://","method_type":"core","value":"crownhotelnantwich.com"}},{"fax":{"object_display_name":"Fax","description_default":"Send a fax","description":null,"prefix":"tel:","method_type":"core","value":"01270 628047"}},{"email":{"object_display_name":"Email","description_default":"Send an email","description":"Send an email","prefix":"mailto:","method_type":"core","value":"info@crownhotelnantwich.com"}},{"address":{"description":"Find Us","description_default":"View Address","lines":["High Street","Nantwich","Cheshire","CW5 5AS"],"postcode":null,"country":null,"method_type":"core","object_display_name":"Address","prefix":""}}]}}
+    }, {
+        "id": "ObjectUnpacker-11",
+        "input": {"@n":1,"o":{"n":"NUM Technology Ltd","id":10097965,"a":["39th Floor","One Canada Square","Canary Wharf","London"],"pz":"E14 5AB","co":"GB","t":"+441270123456","e":"domains@num.uk","c":[{"AD":{"n":"Mr Admin Contact","a":["Admin Department","39th Floor","One Canada Square","Canary Wharf","London"],"pz":"E14 5AB","co":"GB","e":"domains-admin@num.uk","t":"+441270654321"}},{"TC":{"n":"Ms Tech Contact","a":["Tech Team","39th Floor","One Canada Square","Canary Wharf","London"],"pz":"E14 5AB","t":"+441270111111","e":"domains-tech@num.uk","co":"GB"}},{"SC":{"n":"Ms Security Contact","a":["Tech Team","39th Floor","One Canada Square","Canary Wharf","London"],"pz":"E14 5AB","co":"GB","t":"+441270222222","e":"domains-security@num.uk"}}]}},
+		"trans": {"@n":{"rewriteValue":"%/compact.@n"},"o":{"rewriteKey":"organisation","assignKeys":["n","id","a","pz","co","t","e","c"],"rewriteValue":{"name":"%n","identifier":"%id","address":"%a","postcode_zip":"%pz","country":"%co","telephone":"%t","email":"%e","contacts":"%c","object_display_name":"Organisation"}},"AD":{"rewriteKey":"AD","assignKeys":["n","a","pz","co","e","t"],"rewriteValue":{"name":"%n","address":"%a","postcode_zip":"%pz","country":"%co","telephone":"%t","email":"%e"}},"TC":{"rewriteKey":"TC","assignKeys":["n","a","pz","co","e","t"],"rewriteValue":{"name":"%n","address":"%a","postcode_zip":"%pz","country":"%co","telephone":"%t","email":"%e"}},"SC":{"rewriteKey":"SC","assignKeys":["n","a","pz","co","e","t"],"rewriteValue":{"name":"%n","address":"%a","postcode_zip":"%pz","country":"%co","telephone":"%t","email":"%e"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"organisation":{"name":"NUM Technology Ltd","identifier":10097965,"address":["39th Floor","One Canada Square","Canary Wharf","London"],"postcode_zip":"E14 5AB","country":"GB","telephone":"+441270123456","email":"domains@num.uk","contacts":[{"AD":{"name":"Mr Admin Contact","address":["Admin Department","39th Floor","One Canada Square","Canary Wharf","London"],"postcode_zip":"E14 5AB","country":"GB","telephone":"+441270654321","email":"domains-admin@num.uk"}},{"TC":{"name":"Ms Tech Contact","address":["Tech Team","39th Floor","One Canada Square","Canary Wharf","London"],"postcode_zip":"E14 5AB","country":"GB","telephone":"+441270111111","email":"domains-tech@num.uk"}},{"SC":{"name":"Ms Security Contact","address":["Tech Team","39th Floor","One Canada Square","Canary Wharf","London"],"postcode_zip":"E14 5AB","country":"GB","telephone":"+441270222222","email":"domains-security@num.uk"}}],"object_display_name":"Organisation"}}
+    }, {
+        "id": "ObjectUnpacker-12",
+        "input": {"@n":1,"i":[{"n":"NUM Logo","t":"logo","v":[["https://www.logos.uk/num/num.uk-100.png","image/png",100,100],["https://www.logos.uk/num/num.uk-250.png","image/png",250,250],["https://www.logos.uk/num/num.uk-500.png","image/png",500,500]]},{"n":"NUM Strapline","t":"splash","v":[["https://www.logos.uk/num/num.uk-strapline.png","image/png",250,250],["https://www.logos.uk/num/num.uk-strapline-500.png","image/png",500,500],["https://www.logos.uk/num/num.uk-strapline-1000.png","image/png",1000,1000]]}]},
+		"trans": {"@n":{"rewriteValue":"%/compact.@n"},"i":{"rewriteKey":"images","arrayItems":"image"},"image":{"assignKeys":["n","t","v"],"replacePair":{"name":"%n","type":"%t","variants":"%v"}},"v":{"arrayItems":"variant"},"variant":{"assignKeys":["u","m","w","h"],"replacePair":{"url":"%u","mime":"%m","width":"%w","height":"%h"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"images":[{"name":"NUM Logo","type":"logo","variants":[{"url":"https://www.logos.uk/num/num.uk-100.png","mime":"image/png","width":100,"height":100},{"url":"https://www.logos.uk/num/num.uk-250.png","mime":"image/png","width":250,"height":250},{"url":"https://www.logos.uk/num/num.uk-500.png","mime":"image/png","width":500,"height":500}]},{"name":"NUM Strapline","type":"splash","variants":[{"url":"https://www.logos.uk/num/num.uk-strapline.png","mime":"image/png","width":250,"height":250},{"url":"https://www.logos.uk/num/num.uk-strapline-500.png","mime":"image/png","width":500,"height":500},{"url":"https://www.logos.uk/num/num.uk-strapline-1000.png","mime":"image/png","width":1000,"height":1000}]}]}
+    }, {
+        "id": "ObjectUnpacker-13",
+        "input": {"@n":1,"c":[["be165e855fc34cee0cdfd1b68921152132ee9191",["*"]],["8bfa323c01e3a7f0e90f7685d1b0188b7c8db37e",["numserver.com"]],["a548a3b5f8920fac10530f63da8ce63b67cba768",["m","e","s","c"]]],"b":true},
+		"trans": {"@n":{"rewriteValue":"%/compact.@n"},"b":{"rewriteKey":"branches"},"c":{"rewriteKey":"custodians","arrayItems":"custodian"},"custodian":{"assignKeys":["h","perms"],"replacePair":{"hash":"%h","permissions":"%perms"}}},
+		"subs": {"locale":{"o":{"name":"Organisation"},"fb":{"name":"Facebook","default":"View Facebook profile"},"tw":{"name":"Twitter","default":"View Twitter profile"},"pi":{"name":"Pinterest","default":"View Pinterest board"},"in":{"name":"Instagram","default":"View Instagram profile"},"l":{"name":"Link","default":"Follow Link"},"t":{"name":"Telephone","default":"Call"},"u":{"name":"Web URL","default":"Click"},"fx":{"name":"Fax","default":"Send a fax"},"em":{"name":"Email","default":"Send an email"},"a":{"name":"Address","default":"View Address"}}},
+        "output": {"@n":1,"custodians":[{"hash":"be165e855fc34cee0cdfd1b68921152132ee9191","permissions":["*"]},{"hash":"8bfa323c01e3a7f0e90f7685d1b0188b7c8db37e","permissions":["numserver.com"]},{"hash":"a548a3b5f8920fac10530f63da8ce63b67cba768","permissions":["m","e","s","c"]}],"branches":true}
+    }
+]
