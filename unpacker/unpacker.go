@@ -186,7 +186,6 @@ func (u Unpacker) Unpack(source []byte) ([]byte, error) {
 	augment("/subs.", u.Subs, state.noVariMem)
 	augment("/compact.", compact, state.fullMem)
 	augment("/compact.", compact, state.noVariMem)
-	// fmt.Printf("Values: %#v\n", state.mem)
 
 	// pass two, process the data
 	state.dec = json.NewDecoder(bytes.NewReader(source))
@@ -209,7 +208,6 @@ func (state unpackState) value() interface{} {
 	}
 	switch v := token.(type) {
 	case json.Delim:
-		// fmt.Printf("Got a delimiter: %v\n", token)
 		switch v.String() {
 		case "{":
 			return state.object()
@@ -219,10 +217,8 @@ func (state unpackState) value() interface{} {
 			panic("Unknown delim string: " + v.String())
 		}
 	case string:
-		// fmt.Printf("Got a string value: %q\n", token)
 		return resolveString(v, state.fullMem)
 	case float64, bool:
-		// fmt.Printf("Got an int value: %f\n", token)
 		return v
 	case nil:
 		return nil
@@ -331,11 +327,7 @@ func resolveString(in string, subz map[string]interface{}) interface{} {
 			case float64:
 				word = strconv.FormatFloat(y, 'G', -1, 64)
 			case bool:
-				if y {
-					word = "true"
-				} else {
-					word = "false"
-				}
+				word = strconv.FormatBool(y)
 			case nil:
 				word = ""
 			case []interface{}, map[string]interface{}:
@@ -449,7 +441,6 @@ func (state unpackState) transform(dest map[string]interface{}, key string, valu
 	// 1.5: update ctx as necessary
 	ctx["self"] = value
 	augment("", value, ctx)
-	// fmt.Printf("Got context: %v\n", ctx)
 
 	// 2: replacePair and exit
 	if trans.ReturnNull {

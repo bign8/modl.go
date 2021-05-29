@@ -3,7 +3,7 @@ package unpacker
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -29,7 +29,7 @@ func (test *UnpackerTest) Run(t *testing.T) {
 	}
 	u := &Unpacker{}
 	if len(test.TransFile) != 0 {
-		bits, err := ioutil.ReadFile(test.TransFile)
+		bits, err := os.ReadFile(test.TransFile)
 		must(err)
 		test.Trans, err = ParseTransforms(bits)
 		must(err)
@@ -67,7 +67,7 @@ func (test UnpackerTest) out() []byte {
 var skip = map[string]bool{}
 
 func TestUnpacker(t *testing.T) {
-	jsonTests, err := ioutil.ReadFile("tests.json")
+	jsonTests, err := os.ReadFile("tests.json")
 	if err != nil {
 		t.Skip("Cannot read base_tests.json (git submodule init): " + err.Error())
 	}
